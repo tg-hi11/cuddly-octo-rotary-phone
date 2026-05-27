@@ -28,3 +28,26 @@ PREVIEWS_CHANNEL_ID = "1503281460642320516"
 PROMO_CHANNEL_ID = "1509314681901158430"
 INFRACTION_CHANNEL_ID = "1509314657951944837"
 CLIENT_ID = "1508768040710443279"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[workflows.workflow.metadata]
+outputType = "console"
