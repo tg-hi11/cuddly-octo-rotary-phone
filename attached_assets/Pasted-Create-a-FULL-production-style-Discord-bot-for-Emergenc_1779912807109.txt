@@ -1,0 +1,365 @@
+Create a FULL production-style Discord bot for Emergency Response: Liberty County (ERLC) using:
+
+* TypeScript
+* Node.js
+* discord.js v14
+* MongoDB + mongoose
+* Axios
+* dotenv
+
+The bot must be modular, scalable, and structured like a commercial ERLC management bot.
+
+DO NOT generate a basic beginner bot.
+DO NOT put everything in one file.
+Use proper architecture, handlers, services, embeds, database schemas, utilities, and slash command structure.
+
+==================================================
+PROJECT STRUCTURE
+=================
+
+Generate this exact structure:
+
+src/
+│
+├── commands/
+│   ├── erlc/
+│   ├── sessions/
+│   ├── moderation/
+│   ├── management/
+│   └── utility/
+│
+├── events/
+├── handlers/
+├── services/
+│   ├── prc/
+│   ├── embeds/
+│   ├── sessions/
+│   ├── infractions/
+│   └── promotions/
+│
+├── database/
+│   ├── schemas/
+│   └── connect.ts
+│
+├── utils/
+├── config/
+├── types/
+└── index.ts
+
+==================================================
+MAIN FEATURES
+=============
+
+Implement ALL of the following systems.
+
+==================================================
+ERLC API INTEGRATION
+====================
+
+Use the official PRC API.
+
+Create a reusable PRC API wrapper service using Axios.
+
+Include:
+
+* get server info
+* get players
+* get queue
+* get vehicles
+* get kill logs
+* get join logs
+* get command logs
+* get mod calls
+* execute in-game commands
+
+Create these slash commands:
+
+/erlc server
+/erlc players
+/erlc queue
+/erlc vehicles
+/erlc staff
+/erlc killlogs
+/erlc joinlogs
+/erlc commandlogs
+/erlc modcalls
+/erlccommand
+
+Use proper embeds with:
+
+* timestamps
+* footers
+* thumbnails
+* emojis
+* section dividers
+* clean formatting
+* pagination if needed
+
+==================================================
+SESSION MANAGEMENT SYSTEM
+=========================
+
+Create a COMPLETE session system.
+
+Commands:
+
+* /session startup
+* /session shutdown
+* /session vote
+* /session boost
+* /session full
+* /session lock
+* /session unlock
+
+==================================================
+SESSION STARTUP
+===============
+
+Create a professional startup embed that includes:
+
+* server name
+* join code
+* player count
+* active staff
+* session host
+* startup time
+* live stats
+* buttons
+
+Buttons:
+
+* Refresh Stats
+* Vote to Join
+* Join Server
+
+The refresh button must:
+
+* update player count
+* update queue
+* update active staff
+* update uptime
+
+==================================================
+SESSION SHUTDOWN
+================
+
+Create a shutdown embed showing:
+
+* total session duration
+* peak player count
+* session host
+* closing message
+
+==================================================
+VOTE SYSTEM
+===========
+
+Create a vote-to-start system.
+
+Requirements:
+
+* users click buttons to vote
+* configurable vote threshold
+* live vote counter
+* automatic session start when threshold reached
+* anti-duplicate voting
+* auto-expire after timeout
+
+==================================================
+BOOST SYSTEM
+============
+
+Create a session boost command.
+
+It should:
+
+* ping a configurable role
+* include live server stats
+* include current player count
+* include queue count
+* use an attractive embed
+
+==================================================
+INFRACTIONS SYSTEM
+==================
+
+Create a FULL infractions module.
+
+Commands:
+
+* /warn
+* /strike
+* /suspend
+* /ban
+* /removeinfraction
+* /infractions
+
+Store infractions in MongoDB.
+
+Each infraction must include:
+
+* moderator
+* reason
+* evidence
+* date
+* severity
+* expiration
+
+Create:
+
+* staff logs
+* automatic DM notifications
+* infraction history lookup
+* formatted infraction embeds
+
+==================================================
+PROMOTIONS SYSTEM
+=================
+
+Create a promotions module.
+
+Commands:
+
+* /promote
+* /demote
+* /setrank
+* /rankhistory
+
+Features:
+
+* automatic role updates
+* promotion history
+* logs
+* embeds
+* configurable rank hierarchy
+
+==================================================
+PREVIEWS MODULE
+===============
+
+Create a previews/media module.
+
+Commands:
+
+* /preview post
+* /preview schedule
+* /preview delete
+
+Features:
+
+* image support
+* embed previews
+* scheduled posts
+* media gallery
+* configurable channels
+
+==================================================
+DATABASE
+========
+
+Use mongoose schemas for:
+
+* guild config
+* sessions
+* votes
+* infractions
+* promotions
+* preview posts
+
+==================================================
+PERMISSIONS
+===========
+
+Implement:
+
+* role-based permissions
+* staff-only commands
+* admin-only commands
+* configurable staff roles
+* permission utility functions
+
+==================================================
+EMBED DESIGN
+============
+
+ALL embeds must look modern and professional.
+
+Requirements:
+
+* consistent colors
+* thumbnails
+* footers
+* timestamps
+* section spacing
+* emojis/icons
+* clean formatting
+
+Style inspiration:
+modern ERLC management bots.
+
+==================================================
+BUTTONS & COMPONENTS
+====================
+
+Use:
+
+* buttons
+* select menus
+* modals
+* collectors
+
+Implement proper interaction handling.
+
+==================================================
+ERROR HANDLING
+==============
+
+Implement:
+
+* try/catch
+* API failure handling
+* cooldowns
+* invalid permission handling
+* logging system
+
+==================================================
+CONFIG SYSTEM
+=============
+
+Use:
+
+* .env
+* guild config schema
+* configurable channels
+* configurable roles
+
+==================================================
+CODE QUALITY
+============
+
+Requirements:
+
+* strongly typed TypeScript
+* reusable services
+* no duplicated logic
+* clean architecture
+* scalable design
+* comments explaining important sections
+
+==================================================
+OUTPUT REQUIREMENTS
+===================
+
+Generate:
+
+* package.json
+* tsconfig.json
+* .env.example
+* all folders
+* all files
+* starter commands
+* starter schemas
+* startup instructions
+* deployment instructions for Replit
+
+Generate COMPLETE code, not placeholders.
