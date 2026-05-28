@@ -1,24 +1,18 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder, Message } from 'discord.js';
+import { ChatInputCommandInteraction, SlashCommandBuilder, GuildMember, Message } from 'discord.js';
 import { Command, BotClient } from '../../types';
 import { prcApi } from '../../services/prc/prcApi';
-import { buildSuccessEmbed, buildErrorEmbed } from '../../services/embeds/embedBuilder';
+import { buildSuccessEmbed, buildErrorEmbed, bottomBannerEmbed } from '../../services/embeds/embedBuilder';
 import { hasSessionPerms } from '../../utils/permissions';
-import { GuildMember } from 'discord.js';
 
 const data = new SlashCommandBuilder()
   .setName('erlccommand')
   .setDescription('Execute an in-game ERLC command')
-  .addStringOption((opt) =>
-    opt.setName('command').setDescription('The command to execute in-game').setRequired(true)
-  );
+  .addStringOption((o) => o.setName('command').setDescription('The command to execute in-game').setRequired(true));
 
 async function execute(interaction: ChatInputCommandInteraction, client: BotClient): Promise<void> {
   const member = interaction.member as GuildMember;
   if (!hasSessionPerms(member)) {
-    await interaction.reply({
-      embeds: [buildErrorEmbed('No Permission', 'You do not have permission to execute in-game commands.')],
-      ephemeral: true,
-    });
+    await interaction.reply({ embeds: [buildErrorEmbed('No Permission', 'You do not have permission to execute in-game commands.')], ephemeral: true });
     return;
   }
 
@@ -27,9 +21,7 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
 
   try {
     await prcApi.executeCommand(command);
-    await interaction.editReply({
-      embeds: [buildSuccessEmbed('Command Executed', `Successfully executed: \`${command}\``)],
-    });
+    await interaction.editReply({ embeds: [buildSuccessEmbed('Command Executed', `\`${command}\` was sent successfully.`), bottomBannerEmbed()] });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to execute command.';
     await interaction.editReply({ embeds: [buildErrorEmbed('Execution Failed', msg)] });
@@ -49,7 +41,7 @@ async function prefixExecute(message: Message, args: string[], client: BotClient
   const cmd = args.join(' ');
   try {
     await prcApi.executeCommand(cmd);
-    await message.reply({ embeds: [buildSuccessEmbed('Command Executed', `Successfully executed: \`${cmd}\``)] });
+    await message.reply({ embeds: [buildSuccessEmbed('Command Executed', `\`${cmd}\` was sent successfully.`), bottomBannerEmbed()] });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to execute command.';
     await message.reply({ embeds: [buildErrorEmbed('Execution Failed', msg)] });

@@ -9,104 +9,98 @@ import {
   Message,
 } from 'discord.js';
 import { Command, BotClient } from '../../types';
+import { E } from '../../config/emojis';
 import { Config } from '../../config/config';
-import { DIVIDER } from '../../services/embeds/embedBuilder';
+import { bottomBannerEmbed } from '../../services/embeds/embedBuilder';
 
-const CATEGORIES: Record<string, { emoji: string; commands: { name: string; prefix: string; desc: string }[] }> = {
-  'ERLC API': {
-    emoji: '🏙️',
+const CATEGORIES: { name: string; emoji: string; commands: { slash: string; prefix: string; desc: string }[] }[] = [
+  {
+    name: 'ERLC API',
+    emoji: E.roblox,
     commands: [
-      { name: '/erlc server', prefix: '>erlc server', desc: 'View server info' },
-      { name: '/erlc players', prefix: '>erlc players', desc: 'View online players' },
-      { name: '/erlc queue', prefix: '>erlc queue', desc: 'View queue count' },
-      { name: '/erlc vehicles', prefix: '>erlc vehicles', desc: 'View spawned vehicles' },
-      { name: '/erlc staff', prefix: '>erlc staff', desc: 'View online staff' },
-      { name: '/erlc killlogs', prefix: '>erlc killlogs', desc: 'View kill logs' },
-      { name: '/erlc joinlogs', prefix: '>erlc joinlogs', desc: 'View join logs' },
-      { name: '/erlc commandlogs', prefix: '>erlc commandlogs', desc: 'View command logs' },
-      { name: '/erlc modcalls', prefix: '>erlc modcalls', desc: 'View mod calls' },
-      { name: '/erlccommand', prefix: '>erlccommand <cmd>', desc: 'Execute in-game command' },
+      { slash: '/erlc server',      prefix: '>erlc server',      desc: 'Server info' },
+      { slash: '/erlc players',     prefix: '>erlc players',     desc: 'Online players' },
+      { slash: '/erlc queue',       prefix: '>erlc queue',       desc: 'Queue count' },
+      { slash: '/erlc vehicles',    prefix: '>erlc vehicles',    desc: 'Spawned vehicles' },
+      { slash: '/erlc staff',       prefix: '>erlc staff',       desc: 'Online staff' },
+      { slash: '/erlc killlogs',    prefix: '>erlc killlogs',    desc: 'Kill logs' },
+      { slash: '/erlc joinlogs',    prefix: '>erlc joinlogs',    desc: 'Join logs' },
+      { slash: '/erlc commandlogs', prefix: '>erlc commandlogs', desc: 'Command logs' },
+      { slash: '/erlc modcalls',    prefix: '>erlc modcalls',    desc: 'Mod calls' },
+      { slash: '/erlccommand',      prefix: '>erlccommand',      desc: 'Run in-game command' },
     ],
   },
-  'Sessions': {
-    emoji: '🟢',
+  {
+    name: 'Sessions',
+    emoji: E.leaf1,
     commands: [
-      { name: '/session startup', prefix: '>session startup', desc: 'Start a new session' },
-      { name: '/session shutdown', prefix: '>session shutdown', desc: 'End the active session' },
-      { name: '/session vote', prefix: '>session vote', desc: 'Start a vote-to-join' },
-      { name: '/session boost', prefix: '>session boost', desc: 'Boost the session' },
-      { name: '/session full', prefix: '>session full', desc: 'Toggle server full status' },
-      { name: '/session lock', prefix: '>session lock', desc: 'Lock the session' },
-      { name: '/session unlock', prefix: '>session unlock', desc: 'Unlock the session' },
+      { slash: '/session startup',  prefix: '>session startup',  desc: 'Start a new session' },
+      { slash: '/session shutdown', prefix: '>session shutdown', desc: 'End the session' },
+      { slash: '/session vote',     prefix: '>session vote',     desc: 'Start a vote' },
+      { slash: '/session boost',    prefix: '>session boost',    desc: 'Boost the session' },
+      { slash: '/session full',     prefix: '>session full',     desc: 'Toggle full status' },
+      { slash: '/session lock',     prefix: '>session lock',     desc: 'Lock the session' },
+      { slash: '/session unlock',   prefix: '>session unlock',   desc: 'Unlock the session' },
     ],
   },
-  'Infractions': {
-    emoji: '🚨',
+  {
+    name: 'Infractions',
+    emoji: E.gavel,
     commands: [
-      { name: '/warn', prefix: '>warn', desc: 'Issue a verbal warning or warning' },
-      { name: '/strike', prefix: '>strike', desc: 'Issue a strike' },
-      { name: '/suspend', prefix: '>suspend', desc: 'Suspend a staff member' },
-      { name: '/ban', prefix: '>ban', desc: 'Terminate or blacklist a member' },
-      { name: '/removeinfraction', prefix: '>removeinfraction', desc: 'Void an infraction by case ID' },
-      { name: '/infractions', prefix: '>infractions', desc: 'View infraction history' },
+      { slash: '/warn',             prefix: '>warn',             desc: 'Issue a warning' },
+      { slash: '/strike',           prefix: '>strike',           desc: 'Issue a strike' },
+      { slash: '/suspend',          prefix: '>suspend',          desc: 'Suspend a member' },
+      { slash: '/ban',              prefix: '>ban',              desc: 'Terminate or blacklist' },
+      { slash: '/removeinfraction', prefix: '>removeinfraction', desc: 'Void an infraction' },
+      { slash: '/infractions',      prefix: '>infractions',      desc: 'View history' },
     ],
   },
-  'Promotions': {
-    emoji: '📈',
+  {
+    name: 'Promotions',
+    emoji: E.thumbsup,
     commands: [
-      { name: '/promote', prefix: '>promote', desc: 'Promote a staff member' },
-      { name: '/demote', prefix: '>demote', desc: 'Demote a staff member' },
-      { name: '/setrank', prefix: '>setrank', desc: 'Set a specific rank' },
+      { slash: '/promote',  prefix: '>promote',  desc: 'Promote a member' },
+      { slash: '/demote',   prefix: '>demote',   desc: 'Demote a member' },
+      { slash: '/setrank',  prefix: '>setrank',  desc: 'Set a rank' },
     ],
   },
-  'Previews': {
-    emoji: '🖼️',
+  {
+    name: 'Previews',
+    emoji: E.paint,
     commands: [
-      { name: '/preview post', prefix: '>preview post', desc: 'Post a preview immediately' },
-      { name: '/preview schedule', prefix: '>preview schedule', desc: 'Schedule a preview post' },
-      { name: '/preview delete', prefix: '>preview delete', desc: 'Cancel a scheduled preview' },
+      { slash: '/preview post',     prefix: '>preview post',     desc: 'Post a preview now' },
+      { slash: '/preview schedule', prefix: '>preview schedule', desc: 'Schedule a preview' },
+      { slash: '/preview delete',   prefix: '>preview delete',   desc: 'Cancel a preview' },
     ],
   },
-};
+];
 
-const categoryKeys = Object.keys(CATEGORIES);
-
-const data = new SlashCommandBuilder()
-  .setName('help')
-  .setDescription('View all bot commands');
-
-function buildHelpEmbed(categoryIndex: number): EmbedBuilder {
-  const key = categoryKeys[categoryIndex];
-  const cat = CATEGORIES[key];
-
-  const commandList = cat.commands
-    .map((c) => `**${c.name}** (\`${c.prefix}\`)\n> ${c.desc}`)
-    .join('\n\n');
+function buildHelpEmbed(page: number): EmbedBuilder {
+  const cat = CATEGORIES[page];
+  const lines = cat.commands
+    .map((c) => `${E.dash} \`${c.slash}\` (${c.prefix})\n  ${c.desc}`)
+    .join('\n');
 
   return new EmbedBuilder()
     .setColor(Config.colors.primary)
-    .setTitle(`${cat.emoji}  ${key} Commands`)
-    .setDescription(`${DIVIDER}\n${commandList}\n\n${DIVIDER}`)
-    .setFooter({ text: `Category ${categoryIndex + 1}/${categoryKeys.length} • Prefix: ${Config.prefix} • All / commands have a prefix equivalent` })
-    .setTimestamp();
+    .setDescription(
+      `${cat.emoji} **${cat.name}**\n\n${lines}\n\n` +
+      `${E.bot} Prefix: \`${Config.prefix}\` · Page ${page + 1}/${CATEGORIES.length}`
+    );
 }
 
 function buildNavRow(page: number): ActionRowBuilder<ButtonBuilder> {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder().setCustomId('help_prev').setLabel('◀').setStyle(ButtonStyle.Secondary).setDisabled(page === 0),
-    new ButtonBuilder()
-      .setCustomId('help_home')
-      .setLabel(`${page + 1}/${categoryKeys.length}`)
-      .setStyle(ButtonStyle.Primary)
-      .setDisabled(true),
-    new ButtonBuilder().setCustomId('help_next').setLabel('▶').setStyle(ButtonStyle.Secondary).setDisabled(page === categoryKeys.length - 1)
+    new ButtonBuilder().setCustomId('help_prev').setLabel('Back').setStyle(ButtonStyle.Secondary).setDisabled(page === 0),
+    new ButtonBuilder().setCustomId('help_next').setLabel('Next').setStyle(ButtonStyle.Secondary).setDisabled(page === CATEGORIES.length - 1)
   );
 }
 
 async function execute(interaction: ChatInputCommandInteraction, client: BotClient): Promise<void> {
   let page = 0;
+
   const msg = await interaction.reply({
-    embeds: [buildHelpEmbed(page)],
+    embeds: [buildHelpEmbed(page), bottomBannerEmbed()],
     components: [buildNavRow(page)],
     fetchReply: true,
   });
@@ -115,35 +109,30 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
 
   collector.on('collect', async (btn) => {
     if (btn.user.id !== interaction.user.id) {
-      await btn.reply({ content: 'Not your help menu.', ephemeral: true });
+      await btn.reply({ content: 'Not your menu.', ephemeral: true });
       return;
     }
     if (btn.customId === 'help_prev' && page > 0) page--;
-    if (btn.customId === 'help_next' && page < categoryKeys.length - 1) page++;
-    await btn.update({ embeds: [buildHelpEmbed(page)], components: [buildNavRow(page)] });
+    if (btn.customId === 'help_next' && page < CATEGORIES.length - 1) page++;
+    await btn.update({ embeds: [buildHelpEmbed(page), bottomBannerEmbed()], components: [buildNavRow(page)] });
   });
 
   collector.on('end', () => interaction.editReply({ components: [] }).catch(() => null));
 }
 
 async function prefixExecute(message: Message, args: string[], client: BotClient): Promise<void> {
-  // Build a summary embed with all categories
   const embed = new EmbedBuilder()
     .setColor(Config.colors.primary)
-    .setTitle('📖  ERLC Bot — Command Help')
-    .setDescription(`${DIVIDER}\nPrefix: \`${Config.prefix}\` | Use \`/help\` for interactive help\n${DIVIDER}`)
-    .setTimestamp();
+    .setDescription(
+      `${E.bot} **Command Help** — Prefix: \`${Config.prefix}\`\n\n` +
+      CATEGORIES.map((cat) =>
+        `${cat.emoji} **${cat.name}**\n` +
+        cat.commands.map((c) => `${E.dash} \`${c.prefix}\` — ${c.desc}`).join('\n')
+      ).join('\n\n')
+    );
 
-  for (const [key, cat] of Object.entries(CATEGORIES)) {
-    embed.addFields({
-      name: `${cat.emoji}  ${key}`,
-      value: cat.commands.map((c) => `\`${c.prefix}\` — ${c.desc}`).join('\n'),
-      inline: false,
-    });
-  }
-
-  await message.reply({ embeds: [embed] });
+  await message.reply({ embeds: [embed, bottomBannerEmbed()] });
 }
 
-const command: Command = { data, execute, prefixExecute, cooldown: 5 };
+const command: Command = { data: new SlashCommandBuilder().setName('help').setDescription('View all bot commands'), execute, prefixExecute, cooldown: 5 };
 export default command;

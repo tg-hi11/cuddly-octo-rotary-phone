@@ -12,25 +12,26 @@ import { Command, BotClient } from '../../types';
 import { prcApi } from '../../services/prc/prcApi';
 import {
   bannerEmbed,
+  bottomBannerEmbed,
   buildServerInfoEmbed,
   buildErrorEmbed,
-  DIVIDER,
 } from '../../services/embeds/embedBuilder';
+import { E } from '../../config/emojis';
 import { Config } from '../../config/config';
 import { chunkArray, discordTimestamp } from '../../utils/formatters';
 
 const data = new SlashCommandBuilder()
   .setName('erlc')
   .setDescription('ERLC server commands')
-  .addSubcommand((sub) => sub.setName('server').setDescription('View server information'))
-  .addSubcommand((sub) => sub.setName('players').setDescription('View online players'))
-  .addSubcommand((sub) => sub.setName('queue').setDescription('View server queue'))
-  .addSubcommand((sub) => sub.setName('vehicles').setDescription('View spawned vehicles'))
-  .addSubcommand((sub) => sub.setName('staff').setDescription('View online staff'))
-  .addSubcommand((sub) => sub.setName('killlogs').setDescription('View recent kill logs'))
-  .addSubcommand((sub) => sub.setName('joinlogs').setDescription('View recent join logs'))
-  .addSubcommand((sub) => sub.setName('commandlogs').setDescription('View recent command logs'))
-  .addSubcommand((sub) => sub.setName('modcalls').setDescription('View active mod calls'));
+  .addSubcommand((s) => s.setName('server').setDescription('View server information'))
+  .addSubcommand((s) => s.setName('players').setDescription('View online players'))
+  .addSubcommand((s) => s.setName('queue').setDescription('View server queue'))
+  .addSubcommand((s) => s.setName('vehicles').setDescription('View spawned vehicles'))
+  .addSubcommand((s) => s.setName('staff').setDescription('View online staff'))
+  .addSubcommand((s) => s.setName('killlogs').setDescription('View recent kill logs'))
+  .addSubcommand((s) => s.setName('joinlogs').setDescription('View recent join logs'))
+  .addSubcommand((s) => s.setName('commandlogs').setDescription('View recent command logs'))
+  .addSubcommand((s) => s.setName('modcalls').setDescription('View active mod calls'));
 
 async function execute(interaction: ChatInputCommandInteraction, client: BotClient): Promise<void> {
   await interaction.deferReply();
@@ -44,9 +45,13 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
           prcApi.getPlayers(),
           prcApi.getQueue(),
         ]);
-        const banner = bannerEmbed(Config.banners.sessionStatus);
-        const embed = buildServerInfoEmbed(info, players, queueData.Queue);
-        await interaction.editReply({ embeds: [banner, embed] });
+        await interaction.editReply({
+          embeds: [
+            bannerEmbed(Config.banners.sessionStatus),
+            buildServerInfoEmbed(info, players, queueData.Queue),
+            bottomBannerEmbed(),
+          ],
+        });
         break;
       }
 
@@ -62,33 +67,30 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
         const buildEmbed = (pg: number) =>
           new EmbedBuilder()
             .setColor(Config.colors.primary)
-            .setTitle(`👥  Players Online (${players.length})`)
             .setDescription(
-              `${DIVIDER}\n` +
-              pages[pg].map((p) => `\`${p.Player}\` — **${p.Team}** | ${p.Permission}`).join('\n') +
-              `\n${DIVIDER}`
+              `${E.person} **Players Online** — \`${players.length}\`\n\n` +
+              pages[pg].map((p) => `${E.dash} \`${p.Player}\` — ${p.Team} · ${p.Permission}`).join('\n')
             )
-            .setFooter({ text: `Page ${pg + 1}/${pages.length}` })
-            .setTimestamp();
+            .setFooter({ text: `Page ${pg + 1}/${pages.length}` });
 
-        const row = () =>
+        const navRow = () =>
           new ActionRowBuilder<ButtonBuilder>().addComponents(
-            new ButtonBuilder().setCustomId('prev').setLabel('◀').setStyle(ButtonStyle.Secondary).setDisabled(page === 0),
-            new ButtonBuilder().setCustomId('next').setLabel('▶').setStyle(ButtonStyle.Secondary).setDisabled(page === pages.length - 1)
+            new ButtonBuilder().setCustomId('prev').setLabel('Back').setStyle(ButtonStyle.Secondary).setDisabled(page === 0),
+            new ButtonBuilder().setCustomId('next').setLabel('Next').setStyle(ButtonStyle.Secondary).setDisabled(page === pages.length - 1)
           );
 
-        const msg = await interaction.editReply({ embeds: [buildEmbed(0)], components: pages.length > 1 ? [row()] : [] });
+        const msg = await interaction.editReply({
+          embeds: pages.length > 1 ? [buildEmbed(0), bottomBannerEmbed()] : [buildEmbed(0), bottomBannerEmbed()],
+          components: pages.length > 1 ? [navRow()] : [],
+        });
 
         if (pages.length <= 1) return;
         const collector = msg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
         collector.on('collect', async (btn) => {
-          if (btn.user.id !== interaction.user.id) {
-            await btn.reply({ content: 'Not your command.', ephemeral: true });
-            return;
-          }
+          if (btn.user.id !== interaction.user.id) { await btn.reply({ content: 'Not your command.', ephemeral: true }); return; }
           if (btn.customId === 'prev' && page > 0) page--;
           if (btn.customId === 'next' && page < pages.length - 1) page++;
-          await btn.update({ embeds: [buildEmbed(page)], components: [row()] });
+          await btn.update({ embeds: [buildEmbed(page), bottomBannerEmbed()], components: [navRow()] });
         });
         collector.on('end', () => interaction.editReply({ components: [] }).catch(() => null));
         break;
@@ -98,10 +100,9 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
         const queueData = await prcApi.getQueue();
         const embed = new EmbedBuilder()
           .setColor(Config.colors.primary)
-          .setTitle('📋  Server Queue')
-          .setDescription(`${DIVIDER}\n**Players in Queue:** \`${queueData.Queue}\`\n${DIVIDER}`)
+          .setDescription(`${E.folder} **Queue** — \`${queueData.Queue} players waiting\``)
           .setTimestamp();
-        await interaction.editReply({ embeds: [embed] });
+        await interaction.editReply({ embeds: [embed, bottomBannerEmbed()] });
         break;
       }
 
@@ -117,15 +118,13 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
         const buildEmbed = (pg: number) =>
           new EmbedBuilder()
             .setColor(Config.colors.primary)
-            .setTitle(`🚗  Vehicles (${vehicles.length})`)
             .setDescription(
-              `${DIVIDER}\n` +
-              pages[pg].map((v) => `\`${v.Name}\` — **${v.Owner}**`).join('\n') +
-              `\n${DIVIDER}`
+              `${E.roblox} **Vehicles** — \`${vehicles.length} spawned\`\n\n` +
+              pages[pg].map((v) => `${E.dash} \`${v.Name}\` — ${v.Owner}`).join('\n')
             )
             .setFooter({ text: `Page ${pg + 1}/${pages.length}` });
 
-        await interaction.editReply({ embeds: [buildEmbed(0)] });
+        await interaction.editReply({ embeds: [buildEmbed(0), bottomBannerEmbed()] });
         break;
       }
 
@@ -137,14 +136,12 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
         }
         const embed = new EmbedBuilder()
           .setColor(Config.colors.primary)
-          .setTitle(`👮  Staff Online (${staff.length})`)
           .setDescription(
-            `${DIVIDER}\n` +
-            staff.map((s) => `\`${s.Player}\` — **${s.Permission}**`).join('\n') +
-            `\n${DIVIDER}`
+            `${E.dev} **Staff Online** — \`${staff.length}\`\n\n` +
+            staff.map((s) => `${E.dash} \`${s.Player}\` — ${s.Permission}`).join('\n')
           )
           .setTimestamp();
-        await interaction.editReply({ embeds: [embed] });
+        await interaction.editReply({ embeds: [embed, bottomBannerEmbed()] });
         break;
       }
 
@@ -160,30 +157,26 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
         const buildEmbed = (pg: number) =>
           new EmbedBuilder()
             .setColor(Config.colors.error)
-            .setTitle('💀  Kill Logs')
             .setDescription(
-              `${DIVIDER}\n` +
-              pages[pg]
-                .map((l) => `${discordTimestamp(l.Kill_Time, 'R')} **${l.Killer}** killed **${l.Killed}**`)
-                .join('\n') +
-              `\n${DIVIDER}`
+              `${E.gavel} **Kill Logs**\n\n` +
+              pages[pg].map((l) => `${E.dash} ${discordTimestamp(l.Kill_Time, 'R')} **${l.Killer}** → **${l.Killed}**`).join('\n')
             )
             .setFooter({ text: `Page ${pg + 1}/${pages.length}` });
 
-        const row = () =>
+        const navRow = () =>
           new ActionRowBuilder<ButtonBuilder>().addComponents(
-            new ButtonBuilder().setCustomId('kprev').setLabel('◀').setStyle(ButtonStyle.Secondary).setDisabled(page === 0),
-            new ButtonBuilder().setCustomId('knext').setLabel('▶').setStyle(ButtonStyle.Secondary).setDisabled(page === pages.length - 1)
+            new ButtonBuilder().setCustomId('kprev').setLabel('Back').setStyle(ButtonStyle.Secondary).setDisabled(page === 0),
+            new ButtonBuilder().setCustomId('knext').setLabel('Next').setStyle(ButtonStyle.Secondary).setDisabled(page === pages.length - 1)
           );
 
-        const msg = await interaction.editReply({ embeds: [buildEmbed(0)], components: pages.length > 1 ? [row()] : [] });
+        const msg = await interaction.editReply({ embeds: [buildEmbed(0), bottomBannerEmbed()], components: pages.length > 1 ? [navRow()] : [] });
         if (pages.length <= 1) return;
         const collector = msg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
         collector.on('collect', async (btn) => {
           if (btn.user.id !== interaction.user.id) { await btn.reply({ content: 'Not yours.', ephemeral: true }); return; }
           if (btn.customId === 'kprev' && page > 0) page--;
           if (btn.customId === 'knext' && page < pages.length - 1) page++;
-          await btn.update({ embeds: [buildEmbed(page)], components: [row()] });
+          await btn.update({ embeds: [buildEmbed(page), bottomBannerEmbed()], components: [navRow()] });
         });
         collector.on('end', () => interaction.editReply({ components: [] }).catch(() => null));
         break;
@@ -196,20 +189,15 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
           return;
         }
         const pages = chunkArray(logs.slice(0, 50), 10);
-        let page = 0;
-
         const buildEmbed = (pg: number) =>
           new EmbedBuilder()
             .setColor(Config.colors.success)
-            .setTitle('📥  Join Logs')
             .setDescription(
-              `${DIVIDER}\n` +
-              pages[pg].map((l) => `${discordTimestamp(l.Join_Time, 'R')} **${l.Player}** joined`).join('\n') +
-              `\n${DIVIDER}`
+              `${E.leaf1} **Join Logs**\n\n` +
+              pages[pg].map((l) => `${E.dash} ${discordTimestamp(l.Join_Time, 'R')} **${l.Player}** joined`).join('\n')
             )
             .setFooter({ text: `Page ${pg + 1}/${pages.length}` });
-
-        await interaction.editReply({ embeds: [buildEmbed(0)] });
+        await interaction.editReply({ embeds: [buildEmbed(0), bottomBannerEmbed()] });
         break;
       }
 
@@ -220,22 +208,15 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
           return;
         }
         const pages = chunkArray(logs.slice(0, 50), 10);
-        let page = 0;
-
         const buildEmbed = (pg: number) =>
           new EmbedBuilder()
             .setColor(Config.colors.info)
-            .setTitle('⌨️  Command Logs')
             .setDescription(
-              `${DIVIDER}\n` +
-              pages[pg]
-                .map((l) => `${discordTimestamp(l.Timestamp, 'R')} **${l.Player}**: \`${l.Command}\``)
-                .join('\n') +
-              `\n${DIVIDER}`
+              `${E.dev} **Command Logs**\n\n` +
+              pages[pg].map((l) => `${E.dash} ${discordTimestamp(l.Timestamp, 'R')} **${l.Player}** — \`${l.Command}\``).join('\n')
             )
             .setFooter({ text: `Page ${pg + 1}/${pages.length}` });
-
-        await interaction.editReply({ embeds: [buildEmbed(0)] });
+        await interaction.editReply({ embeds: [buildEmbed(0), bottomBannerEmbed()] });
         break;
       }
 
@@ -247,46 +228,38 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
         }
         const embed = new EmbedBuilder()
           .setColor(Config.colors.warning)
-          .setTitle(`📞  Mod Calls (${calls.length})`)
           .setDescription(
-            `${DIVIDER}\n` +
-            calls.map((c) => `**Caller:** \`${c.Caller}\` → **Moderator:** \`${c.Moderator || 'Unassigned'}\``).join('\n') +
-            `\n${DIVIDER}`
+            `${E.notif} **Mod Calls** — \`${calls.length} active\`\n\n` +
+            calls.map((c) => `${E.dash} **${c.Caller}** → \`${c.Moderator || 'Unassigned'}\``).join('\n')
           )
           .setTimestamp();
-        await interaction.editReply({ embeds: [embed] });
+        await interaction.editReply({ embeds: [embed, bottomBannerEmbed()] });
         break;
       }
     }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'API request failed.';
-    const errEmbed = buildErrorEmbed('API Error', msg);
-    if (interaction.deferred) await interaction.editReply({ embeds: [errEmbed] });
-    else await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+    await interaction.editReply({ embeds: [buildErrorEmbed('API Error', msg)] });
   }
 }
 
 async function prefixExecute(message: Message, args: string[], client: BotClient): Promise<void> {
-  if (!args[0]) {
-    await message.reply({ embeds: [buildErrorEmbed('Usage', 'Usage: `>erlc <subcommand>`')] });
+  const sub = args[0]?.toLowerCase();
+  if (!sub) {
+    await message.reply({ embeds: [buildErrorEmbed('Usage', 'Usage: `>erlc <server|players|queue|vehicles|staff|killlogs|joinlogs|commandlogs|modcalls>`')] });
     return;
   }
-
   const fakeInteraction = {
     deferReply: async () => {},
     editReply: async (opts: object) => { await message.reply(opts as never); return message; },
     reply: async (opts: object) => { await message.reply(opts as never); return message; },
     deferred: true,
-    options: {
-      getSubcommand: () => args[0].toLowerCase(),
-      getString: (name: string) => args[1] ?? null,
-    },
+    options: { getSubcommand: () => sub },
     user: message.author,
     guildId: message.guildId,
     guild: message.guild,
     member: message.member,
   };
-
   await execute(fakeInteraction as unknown as ChatInputCommandInteraction, client);
 }
 

@@ -11,7 +11,8 @@ import {
 } from 'discord.js';
 import { Command, BotClient } from '../../types';
 import { hasInfractionPerms } from '../../utils/permissions';
-import { buildErrorEmbed, DIVIDER } from '../../services/embeds/embedBuilder';
+import { buildErrorEmbed, bottomBannerEmbed } from '../../services/embeds/embedBuilder';
+import { E } from '../../config/emojis';
 import { Infraction } from '../../database/schemas/Infraction';
 import { Config } from '../../config/config';
 import { chunkArray } from '../../utils/formatters';
@@ -31,7 +32,7 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
   }
   await interaction.deferReply({ ephemeral: true });
 
-  const target = interaction.options.getUser('user', true);
+  const target     = interaction.options.getUser('user', true);
   const activeOnly = interaction.options.getBoolean('active') ?? false;
 
   try {
@@ -45,9 +46,9 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
         embeds: [
           new EmbedBuilder()
             .setColor(Config.colors.success)
-            .setTitle('📋  Infraction History')
-            .setDescription(`${DIVIDER}\n✅ **${target.tag}** has no${activeOnly ? ' active' : ''} infractions.\n${DIVIDER}`)
+            .setDescription(`${E.search} **Infractions for ${target.tag}**\n\nNo${activeOnly ? ' active' : ''} infractions found.`)
             .setTimestamp(),
+          bottomBannerEmbed(),
         ],
       });
       return;
@@ -57,49 +58,42 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
     let page = 0;
 
     const buildEmbed = (pg: number) => {
-      const items = pages[pg];
-      const desc =
-        `${DIVIDER}\n` +
-        items
-          .map((inf) => {
-            const caseId = (inf._id as unknown as string).toString().slice(-6).toUpperCase();
-            const date = `<t:${Math.floor(inf.createdAt.getTime() / 1000)}:D>`;
-            const status = inf.active ? '🔴 Active' : '✅ Voided';
-            return `**Case #${caseId}** — \`${inf.type}\` ${status}\n> **Reason:** ${inf.reason}\n> **By:** ${inf.moderatorTag} | ${date}`;
-          })
-          .join('\n\n') +
-        `\n${DIVIDER}`;
+      const lines = pages[pg].map((inf) => {
+        const caseId = (inf._id as unknown as string).toString().slice(-6).toUpperCase();
+        const ts     = `<t:${Math.floor(inf.createdAt.getTime() / 1000)}:D>`;
+        const status = inf.active ? 'Active' : 'Voided';
+        return (
+          `${E.gavel} **Case #${caseId}** — \`${inf.type}\` · ${status}\n` +
+          `${E.folder} ${inf.reason}\n` +
+          `${E.dash} by ${inf.moderatorTag} · ${ts}`
+        );
+      }).join('\n\n');
 
       return new EmbedBuilder()
         .setColor(Config.colors.infraction)
-        .setTitle(`📋  Infractions for ${target.tag} (${infractions.length} total)`)
-        .setDescription(desc)
+        .setDescription(`${E.search} **Infractions for ${target.tag}** — \`${infractions.length} total\`\n\n${lines}`)
         .setFooter({ text: `Page ${pg + 1}/${pages.length}` })
         .setTimestamp();
     };
 
-    const row = () =>
+    const navRow = () =>
       new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder().setCustomId('iprev').setLabel('◀').setStyle(ButtonStyle.Secondary).setDisabled(page === 0),
-        new ButtonBuilder().setCustomId('inext').setLabel('▶').setStyle(ButtonStyle.Secondary).setDisabled(page === pages.length - 1)
+        new ButtonBuilder().setCustomId('iprev').setLabel('Back').setStyle(ButtonStyle.Secondary).setDisabled(page === 0),
+        new ButtonBuilder().setCustomId('inext').setLabel('Next').setStyle(ButtonStyle.Secondary).setDisabled(page === pages.length - 1)
       );
 
     const msg = await interaction.editReply({
-      embeds: [buildEmbed(0)],
-      components: pages.length > 1 ? [row()] : [],
+      embeds: [buildEmbed(0), bottomBannerEmbed()],
+      components: pages.length > 1 ? [navRow()] : [],
     });
 
     if (pages.length <= 1) return;
-
     const collector = msg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
     collector.on('collect', async (btn) => {
-      if (btn.user.id !== interaction.user.id) {
-        await btn.reply({ content: 'Not yours.', ephemeral: true });
-        return;
-      }
+      if (btn.user.id !== interaction.user.id) { await btn.reply({ content: 'Not yours.', ephemeral: true }); return; }
       if (btn.customId === 'iprev' && page > 0) page--;
       if (btn.customId === 'inext' && page < pages.length - 1) page++;
-      await btn.update({ embeds: [buildEmbed(page)], components: [row()] });
+      await btn.update({ embeds: [buildEmbed(page), bottomBannerEmbed()], components: [navRow()] });
     });
     collector.on('end', () => interaction.editReply({ components: [] }).catch(() => null));
   } catch (err) {

@@ -7,7 +7,7 @@ import {
 } from 'discord.js';
 import { Command, BotClient } from '../../types';
 import { hasPromotionPerms } from '../../utils/permissions';
-import { buildErrorEmbed, buildSuccessEmbed, bannerEmbed, buildPromotionEmbed } from '../../services/embeds/embedBuilder';
+import { buildErrorEmbed, buildSuccessEmbed, bannerEmbed, bottomBannerEmbed, buildPromotionEmbed } from '../../services/embeds/embedBuilder';
 import { Promotion } from '../../database/schemas/Promotion';
 import { Config } from '../../config/config';
 import { logger } from '../../utils/logger';
@@ -16,8 +16,8 @@ const data = new SlashCommandBuilder()
   .setName('promote')
   .setDescription('Promote a staff member')
   .addUserOption((o) => o.setName('user').setDescription('User to promote').setRequired(true))
-  .addRoleOption((o) => o.setName('rank').setDescription('New rank/role to assign').setRequired(true))
-  .addStringOption((o) => o.setName('reason').setDescription('Reason for promotion').setRequired(false));
+  .addRoleOption((o) => o.setName('rank').setDescription('New rank/role').setRequired(true))
+  .addStringOption((o) => o.setName('reason').setDescription('Reason').setRequired(false));
 
 async function execute(interaction: ChatInputCommandInteraction, client: BotClient): Promise<void> {
   const member = interaction.member as GuildMember;
@@ -27,55 +27,39 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
   }
   await interaction.deferReply({ ephemeral: true });
 
-  const target = interaction.options.getUser('user', true);
-  const newRole = interaction.options.getRole('rank', true);
-  const reason = interaction.options.getString('reason') ?? undefined;
+  const target       = interaction.options.getUser('user', true);
+  const newRole      = interaction.options.getRole('rank', true);
+  const reason       = interaction.options.getString('reason') ?? undefined;
   const targetMember = await interaction.guild!.members.fetch(target.id).catch(() => null);
 
   if (!targetMember) {
-    await interaction.editReply({ embeds: [buildErrorEmbed('Not Found', 'Could not find that member in this server.')] });
+    await interaction.editReply({ embeds: [buildErrorEmbed('Not Found', 'Could not find that member.')] });
     return;
   }
 
   const fromRank = targetMember.roles.highest.name !== '@everyone' ? targetMember.roles.highest.name : undefined;
 
   try {
-    // Assign new role
     await targetMember.roles.add(newRole.id);
 
     await Promotion.create({
-      guildId: interaction.guildId!,
-      userId: target.id,
-      userTag: target.tag,
-      promoterId: interaction.user.id,
-      promoterTag: interaction.user.tag,
-      action: 'promote',
-      fromRank,
-      toRank: newRole.name,
-      reason,
+      guildId: interaction.guildId!, userId: target.id, userTag: target.tag,
+      promoterId: interaction.user.id, promoterTag: interaction.user.tag,
+      action: 'promote', fromRank, toRank: newRole.name, reason,
     });
 
-    const banner = bannerEmbed(Config.banners.promotions);
-    const embed = buildPromotionEmbed({
-      userTag: target.tag,
-      userId: target.id,
-      promoterTag: interaction.user.tag,
-      action: 'promote',
-      fromRank,
-      toRank: newRole.name,
-      reason,
-    });
+    const embeds = [
+      bannerEmbed(Config.banners.promotions),
+      buildPromotionEmbed({ userTag: target.tag, userId: target.id, promoterTag: interaction.user.tag, action: 'promote', fromRank, toRank: newRole.name, reason }),
+      bottomBannerEmbed(),
+    ];
 
-    // DM the user
-    try { await target.send({ embeds: [banner, embed] }); } catch { /* DM closed */ }
+    try { await target.send({ embeds }); } catch { /* DM closed */ }
 
-    // Post to promo channel
     const promoChannel = interaction.guild!.channels.cache.get(Config.channels.promotions) as TextChannel;
-    if (promoChannel) await promoChannel.send({ embeds: [banner, embed] });
+    if (promoChannel) await promoChannel.send({ embeds });
 
-    await interaction.editReply({
-      embeds: [buildSuccessEmbed('Promoted', `${target.tag} has been promoted to **${newRole.name}**.`)],
-    });
+    await interaction.editReply({ embeds: [buildSuccessEmbed('Promoted', `${target.tag} → **${newRole.name}**`)] });
   } catch (err) {
     logger.error('PromoteCommand', 'Failed', err);
     await interaction.editReply({ embeds: [buildErrorEmbed('Error', 'Failed to promote member.')] });

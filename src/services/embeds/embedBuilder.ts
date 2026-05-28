@@ -1,24 +1,24 @@
-import {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  AttachmentBuilder,
-} from 'discord.js';
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { Config } from '../../config/config';
+import { E } from '../../config/emojis';
 import { PRCServerInfo, PRCPlayer } from '../../types';
-import { formatDuration, secondsSince } from '../../utils/formatters';
+import { formatDuration } from '../../utils/formatters';
 import { ISession } from '../../database/schemas/Session';
 
-// ─── Banner embed (always first) ───────────────────────────────────────────
+// ─── Shared helpers ───────────────────────────────────────────────────────────
+
+/** Top banner embed (always sent as first embed) */
 export function bannerEmbed(url: string): EmbedBuilder {
   return new EmbedBuilder().setImage(url).setColor(Config.colors.primary);
 }
 
-// ─── Divider line helper ────────────────────────────────────────────────────
-export const DIVIDER = '▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬';
+/** Bottom banner embed (always sent as last embed) */
+export function bottomBannerEmbed(): EmbedBuilder {
+  return new EmbedBuilder().setImage(Config.banners.bottom).setColor(Config.colors.primary);
+}
 
-// ─── Session Startup Embed ──────────────────────────────────────────────────
+// ─── Session Startup ──────────────────────────────────────────────────────────
+
 export function buildSessionStartupEmbed(
   info: PRCServerInfo,
   players: PRCPlayer[],
@@ -31,52 +31,51 @@ export function buildSessionStartupEmbed(
       p.Permission === 'Server Administrator' ||
       p.Permission === 'Server Owner'
   );
-  const uptime = formatDuration(Date.now() - session.startTime.getTime());
-  const staffList = staff.length > 0 ? staff.map((s) => `\`${s.Player}\``).join(', ') : 'None Online';
+
+  const uptime   = formatDuration(Date.now() - session.startTime.getTime());
+  const staffStr = staff.length > 0 ? staff.map((s) => `\`${s.Player}\``).join(', ') : 'None';
+  const lock     = session.isLocked ? '`Locked`' : '`Open`';
+  const full     = session.isFull   ? '`Full`'   : '`Available`';
 
   return new EmbedBuilder()
     .setColor(Config.colors.primary)
-    .setTitle('🟢  Session Active')
-    .setDescription(`${DIVIDER}`)
-    .addFields(
-      { name: '🏙️  Server', value: info.Name || 'ERLC Server', inline: true },
-      { name: '🔑  Join Code', value: `\`${info.JoinKey}\``, inline: true },
-      { name: '\u200B', value: '\u200B', inline: false },
-      { name: '👥  Players', value: `\`${info.CurrentPlayers} / ${info.MaxPlayers}\``, inline: true },
-      { name: '⚙️  Active Staff', value: staffList, inline: true },
-      { name: '\u200B', value: '\u200B', inline: false },
-      { name: '👑  Session Host', value: `<@${session.hostId}>`, inline: true },
-      { name: '⏱️  Uptime', value: `\`${uptime}\``, inline: true },
-      { name: '\u200B', value: '\u200B', inline: false },
-      { name: '\u200B', value: DIVIDER }
+    .setDescription(
+      `${E.leaf1} **Session Active**\n` +
+      `\n` +
+      `${E.roblox} **Server** — ${info.Name || 'ERLC Server'}\n` +
+      `${E.giveaway} **Join Code** — \`${info.JoinKey}\`\n` +
+      `\n` +
+      `${E.person} **Players** — \`${info.CurrentPlayers} / ${info.MaxPlayers}\`\n` +
+      `${E.dev} **Active Staff** — ${staffStr}\n` +
+      `\n` +
+      `${E.notif} **Host** — <@${session.hostId}>\n` +
+      `${E.calendar} **Uptime** — \`${uptime}\`\n` +
+      `\n` +
+      `${E.restricted} **Status** — ${lock} · ${full}`
     )
-    .setFooter({ text: `-# Last updated: ${secondsAgo} seconds ago` })
-    .setTimestamp();
+    .setFooter({ text: `-# Last updated: ${secondsAgo}s ago` });
 }
 
-// ─── Session Startup Buttons ────────────────────────────────────────────────
 export function buildSessionButtons(voteCount: number, threshold: number): ActionRowBuilder<ButtonBuilder>[] {
-  const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
+  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId('session_vote')
       .setLabel(`Vote to Join (${voteCount}/${threshold})`)
-      .setEmoji('🗳️')
       .setStyle(ButtonStyle.Primary),
     new ButtonBuilder()
       .setCustomId('session_voters')
       .setLabel('Voters')
-      .setEmoji('👥')
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setLabel('Join Server')
-      .setEmoji('🎮')
       .setStyle(ButtonStyle.Link)
       .setURL('https://policeroleplay.community/join/server')
   );
-  return [row1];
+  return [row];
 }
 
-// ─── Session Shutdown Embed ─────────────────────────────────────────────────
+// ─── Session Shutdown ─────────────────────────────────────────────────────────
+
 export function buildShutdownEmbed(session: ISession): EmbedBuilder {
   const duration = session.endTime
     ? formatDuration(session.endTime.getTime() - session.startTime.getTime())
@@ -84,20 +83,20 @@ export function buildShutdownEmbed(session: ISession): EmbedBuilder {
 
   return new EmbedBuilder()
     .setColor(Config.colors.error)
-    .setTitle('🔴  Session Closed')
-    .setDescription(`${DIVIDER}`)
-    .addFields(
-      { name: '👑  Session Host', value: `<@${session.hostId}>`, inline: true },
-      { name: '⏱️  Total Duration', value: `\`${duration}\``, inline: true },
-      { name: '\u200B', value: '\u200B', inline: false },
-      { name: '📈  Peak Players', value: `\`${session.peakPlayers}\``, inline: true },
-      { name: '\u200B', value: DIVIDER }
+    .setDescription(
+      `${E.moon} **Session Closed**\n` +
+      `\n` +
+      `${E.notif} **Host** — <@${session.hostId}>\n` +
+      `${E.calendar} **Duration** — \`${duration}\`\n` +
+      `${E.person} **Peak Players** — \`${session.peakPlayers}\`\n` +
+      `\n` +
+      `Thank you to everyone who attended.`
     )
-    .setFooter({ text: 'Thank you for attending!' })
     .setTimestamp();
 }
 
-// ─── Vote Embed ─────────────────────────────────────────────────────────────
+// ─── Vote Embed ───────────────────────────────────────────────────────────────
+
 export function buildVoteEmbed(
   initiatorTag: string,
   voters: string[],
@@ -107,26 +106,26 @@ export function buildVoteEmbed(
   maxPlayers: number,
   queue: number
 ): EmbedBuilder {
-  const progress = Math.min(Math.floor((voters.length / threshold) * 10), 10);
-  const bar = '█'.repeat(progress) + '░'.repeat(10 - progress);
+  const filled  = Math.min(Math.floor((voters.length / threshold) * 10), 10);
+  const bar     = '█'.repeat(filled) + '░'.repeat(10 - filled);
 
   return new EmbedBuilder()
     .setColor(Config.colors.info)
-    .setTitle('🗳️  Vote to Start Session')
-    .setDescription(`${DIVIDER}\n**${initiatorTag}** has started a vote to begin the session!`)
-    .addFields(
-      { name: '🏙️  Server', value: serverName, inline: true },
-      { name: '👥  Players', value: `\`${currentPlayers}/${maxPlayers}\``, inline: true },
-      { name: '📋  Queue', value: `\`${queue}\``, inline: true },
-      { name: '\u200B', value: '\u200B', inline: false },
-      { name: '📊  Progress', value: `\`[${bar}] ${voters.length}/${threshold}\``, inline: false },
-      { name: '\u200B', value: DIVIDER }
+    .setDescription(
+      `${E.giveaway} **Vote to Start**\n` +
+      `\n` +
+      `${E.roblox} **Server** — ${serverName}\n` +
+      `${E.person} **Players** — \`${currentPlayers}/${maxPlayers}\`  ${E.folder} **Queue** — \`${queue}\`\n` +
+      `\n` +
+      `${E.dash} **Progress** — \`[${bar}] ${voters.length}/${threshold}\`\n` +
+      `\n` +
+      `${E.notif} Started by **${initiatorTag}** — click the button below to vote.`
     )
-    .setFooter({ text: 'Click "Vote to Join" to cast your vote!' })
-    .setTimestamp();
+    .setFooter({ text: 'Voters are hidden. Use the Voters button to see who voted.' });
 }
 
-// ─── Boost Embed ─────────────────────────────────────────────────────────────
+// ─── Boost Embed ──────────────────────────────────────────────────────────────
+
 export function buildBoostEmbed(
   info: PRCServerInfo,
   queue: number,
@@ -134,23 +133,24 @@ export function buildBoostEmbed(
 ): EmbedBuilder {
   return new EmbedBuilder()
     .setColor(Config.colors.warning)
-    .setTitle('🚀  Session Boost')
-    .setDescription(`${DIVIDER}\nA session is currently **active** and needs more players!`)
-    .addFields(
-      { name: '🏙️  Server', value: info.Name || 'ERLC Server', inline: true },
-      { name: '🔑  Join Code', value: `\`${info.JoinKey}\``, inline: true },
-      { name: '\u200B', value: '\u200B', inline: false },
-      { name: '👥  Players', value: `\`${info.CurrentPlayers} / ${info.MaxPlayers}\``, inline: true },
-      { name: '📋  Queue', value: `\`${queue}\``, inline: true },
-      { name: '\u200B', value: '\u200B', inline: false },
-      { name: '👑  Hosted by', value: hostTag, inline: true },
-      { name: '\u200B', value: DIVIDER }
+    .setDescription(
+      `${E.notif} **Session Boost**\n` +
+      `\n` +
+      `${E.roblox} **Server** — ${info.Name || 'ERLC Server'}\n` +
+      `${E.giveaway} **Join Code** — \`${info.JoinKey}\`\n` +
+      `\n` +
+      `${E.person} **Players** — \`${info.CurrentPlayers} / ${info.MaxPlayers}\`\n` +
+      `${E.folder} **Queue** — \`${queue}\`\n` +
+      `\n` +
+      `${E.leaf1} **Hosted by** — ${hostTag}\n` +
+      `\n` +
+      `Join now and help us fill the server.`
     )
-    .setFooter({ text: 'Join now to participate!' })
     .setTimestamp();
 }
 
-// ─── Infraction Embed ────────────────────────────────────────────────────────
+// ─── Infraction Embed ─────────────────────────────────────────────────────────
+
 export function buildInfractionEmbed(params: {
   userTag: string;
   userId: string;
@@ -161,37 +161,30 @@ export function buildInfractionEmbed(params: {
   expiresAt?: Date;
   caseId: string;
 }): EmbedBuilder {
-  const fields = [
-    { name: '👤  Staff Member', value: `<@${params.userId}> (${params.userTag})`, inline: true },
-    { name: '🛡️  Moderator', value: params.moderatorTag, inline: true },
-    { name: '\u200B', value: '\u200B', inline: false },
-    { name: '⚠️  Infraction Type', value: `\`${params.type}\``, inline: true },
-    { name: '🗒️  Reason', value: params.reason, inline: false },
-  ];
+  let body =
+    `${E.person} **Staff Member** — <@${params.userId}> (${params.userTag})\n` +
+    `${E.gavel} **Issued by** — ${params.moderatorTag}\n` +
+    `\n` +
+    `${E.restricted} **Type** — \`${params.type}\`\n` +
+    `${E.folder} **Reason** — ${params.reason}\n`;
 
   if (params.evidence) {
-    fields.push({ name: '🖼️  Evidence', value: params.evidence, inline: false });
+    body += `${E.search} **Evidence** — ${params.evidence}\n`;
   }
   if (params.expiresAt) {
-    fields.push({
-      name: '📅  Expires',
-      value: `<t:${Math.floor(params.expiresAt.getTime() / 1000)}:F>`,
-      inline: true,
-    });
+    body += `${E.calendar} **Expires** — <t:${Math.floor(params.expiresAt.getTime() / 1000)}:F>\n`;
   }
 
-  fields.push({ name: '\u200B', value: DIVIDER, inline: false });
+  body += `\n${E.dash} **Case ID** — \`#${params.caseId}\``;
 
   return new EmbedBuilder()
     .setColor(Config.colors.infraction)
-    .setTitle(`🚨  Infraction Issued — Case #${params.caseId}`)
-    .setDescription(DIVIDER)
-    .addFields(fields)
-    .setFooter({ text: `Case ID: ${params.caseId}` })
+    .setDescription(body)
     .setTimestamp();
 }
 
-// ─── Promotion Embed ─────────────────────────────────────────────────────────
+// ─── Promotion Embed ──────────────────────────────────────────────────────────
+
 export function buildPromotionEmbed(params: {
   userTag: string;
   userId: string;
@@ -201,43 +194,40 @@ export function buildPromotionEmbed(params: {
   toRank: string;
   reason?: string;
 }): EmbedBuilder {
-  const actionLabel =
-    params.action === 'promote' ? '📈  Promoted'
-    : params.action === 'demote' ? '📉  Demoted'
-    : '🔧  Rank Set';
-
   const color =
     params.action === 'promote' ? Config.colors.success
     : params.action === 'demote' ? Config.colors.error
     : Config.colors.info;
 
-  const fields = [
-    { name: '👤  Staff Member', value: `<@${params.userId}> (${params.userTag})`, inline: true },
-    { name: '🛡️  Issued by', value: params.promoterTag, inline: true },
-    { name: '\u200B', value: '\u200B', inline: false },
-  ];
+  const label =
+    params.action === 'promote' ? `${E.thumbsup} **Promoted**`
+    : params.action === 'demote' ? `${E.thumbsdown} **Demoted**`
+    : `${E.dev} **Rank Set**`;
+
+  let body =
+    `${label}\n` +
+    `\n` +
+    `${E.person} **Staff Member** — <@${params.userId}> (${params.userTag})\n` +
+    `${E.gavel} **Issued by** — ${params.promoterTag}\n` +
+    `\n`;
 
   if (params.fromRank) {
-    fields.push({ name: '📍  Previous Rank', value: `\`${params.fromRank}\``, inline: true });
+    body += `${E.dash} **From** — \`${params.fromRank}\`\n`;
   }
-  fields.push({ name: '🎯  New Rank', value: `\`${params.toRank}\``, inline: true });
+  body += `${E.leaf1} **To** — \`${params.toRank}\`\n`;
 
   if (params.reason) {
-    fields.push({ name: '\u200B', value: '\u200B', inline: false });
-    fields.push({ name: '🗒️  Reason', value: params.reason, inline: false });
+    body += `\n${E.folder} **Reason** — ${params.reason}\n`;
   }
-
-  fields.push({ name: '\u200B', value: DIVIDER, inline: false });
 
   return new EmbedBuilder()
     .setColor(color)
-    .setTitle(`${actionLabel}`)
-    .setDescription(DIVIDER)
-    .addFields(fields)
+    .setDescription(body)
     .setTimestamp();
 }
 
-// ─── Preview Post Embed ──────────────────────────────────────────────────────
+// ─── Preview Post Embed ───────────────────────────────────────────────────────
+
 export function buildPreviewEmbed(params: {
   title: string;
   description: string;
@@ -247,51 +237,51 @@ export function buildPreviewEmbed(params: {
   const embed = new EmbedBuilder()
     .setColor(Config.colors.primary)
     .setTitle(params.title)
-    .setDescription(`${DIVIDER}\n${params.description}\n\n${DIVIDER}`)
+    .setDescription(`${params.description}`)
     .setFooter({ text: `Posted by ${params.authorTag}` })
     .setTimestamp();
 
   if (params.imageUrl) embed.setImage(params.imageUrl);
-
   return embed;
 }
 
-// ─── Error Embed ─────────────────────────────────────────────────────────────
-export function buildErrorEmbed(title: string, description: string): EmbedBuilder {
-  return new EmbedBuilder()
-    .setColor(Config.colors.error)
-    .setTitle(`❌  ${title}`)
-    .setDescription(description)
-    .setTimestamp();
-}
+// ─── Server Info Embed ────────────────────────────────────────────────────────
 
-// ─── Success Embed ───────────────────────────────────────────────────────────
-export function buildSuccessEmbed(title: string, description: string): EmbedBuilder {
-  return new EmbedBuilder()
-    .setColor(Config.colors.success)
-    .setTitle(`✅  ${title}`)
-    .setDescription(description)
-    .setTimestamp();
-}
-
-// ─── ERLC Server Info Embed ──────────────────────────────────────────────────
-export function buildServerInfoEmbed(info: PRCServerInfo, players: PRCPlayer[], queue: number): EmbedBuilder {
-  const staff = players.filter(
-    (p) => p.Permission !== 'Normal'
-  );
+export function buildServerInfoEmbed(
+  info: PRCServerInfo,
+  players: PRCPlayer[],
+  queue: number
+): EmbedBuilder {
+  const staff = players.filter((p) => p.Permission !== 'Normal');
 
   return new EmbedBuilder()
     .setColor(Config.colors.primary)
-    .setTitle('🏙️  Server Information')
-    .setDescription(DIVIDER)
-    .addFields(
-      { name: '📛  Name', value: info.Name, inline: true },
-      { name: '🔑  Join Code', value: `\`${info.JoinKey}\``, inline: true },
-      { name: '\u200B', value: '\u200B', inline: false },
-      { name: '👥  Players', value: `\`${info.CurrentPlayers} / ${info.MaxPlayers}\``, inline: true },
-      { name: '📋  Queue', value: `\`${queue}\``, inline: true },
-      { name: '👮  Staff Online', value: `\`${staff.length}\``, inline: true },
-      { name: '\u200B', value: DIVIDER }
+    .setDescription(
+      `${E.roblox} **Server** — ${info.Name}\n` +
+      `${E.giveaway} **Join Code** — \`${info.JoinKey}\`\n` +
+      `\n` +
+      `${E.person} **Players** — \`${info.CurrentPlayers} / ${info.MaxPlayers}\`\n` +
+      `${E.folder} **Queue** — \`${queue}\`\n` +
+      `${E.dev} **Staff Online** — \`${staff.length}\``
     )
     .setTimestamp();
 }
+
+// ─── Error / Success ──────────────────────────────────────────────────────────
+
+export function buildErrorEmbed(title: string, description: string): EmbedBuilder {
+  return new EmbedBuilder()
+    .setColor(Config.colors.error)
+    .setDescription(`${E.restricted} **${title}**\n${description}`)
+    .setTimestamp();
+}
+
+export function buildSuccessEmbed(title: string, description: string): EmbedBuilder {
+  return new EmbedBuilder()
+    .setColor(Config.colors.success)
+    .setDescription(`${E.thumbsup} **${title}**\n${description}`)
+    .setTimestamp();
+}
+
+// ─── Legacy export kept for compatibility ─────────────────────────────────────
+export const DIVIDER = '';
