@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, GuildMember, Message } from 'discord.js';
 import { Command, BotClient } from '../../types';
 import { prcApi } from '../../services/prc/prcApi';
-import { buildSuccessEmbed, buildErrorEmbed, bottomBannerEmbed } from '../../services/embeds/embedBuilder';
+import { buildSuccessEmbed, buildErrorEmbed } from '../../services/embeds/embedBuilder';
 import { hasSessionPerms } from '../../utils/permissions';
 
 const data = new SlashCommandBuilder()
@@ -21,7 +21,7 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
 
   try {
     await prcApi.executeCommand(command);
-    await interaction.editReply({ embeds: [buildSuccessEmbed('Command Executed', `\`${command}\` was sent successfully.`), bottomBannerEmbed()] });
+    await interaction.editReply({ embeds: [buildSuccessEmbed('Command Executed', `\`${command}\` was sent successfully.`)] });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to execute command.';
     await interaction.editReply({ embeds: [buildErrorEmbed('Execution Failed', msg)] });
@@ -41,7 +41,7 @@ async function prefixExecute(message: Message, args: string[], client: BotClient
   const cmd = args.join(' ');
   try {
     await prcApi.executeCommand(cmd);
-    await message.reply({ embeds: [buildSuccessEmbed('Command Executed', `\`${cmd}\` was sent successfully.`), bottomBannerEmbed()] });
+    await message.reply({ embeds: [buildSuccessEmbed('Command Executed', `\`${cmd}\` was sent successfully.`)] });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to execute command.';
     await message.reply({ embeds: [buildErrorEmbed('Execution Failed', msg)] });

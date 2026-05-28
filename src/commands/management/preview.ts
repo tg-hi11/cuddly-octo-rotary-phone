@@ -7,7 +7,7 @@ import {
 } from 'discord.js';
 import { Command, BotClient } from '../../types';
 import { hasSessionPerms } from '../../utils/permissions';
-import { buildErrorEmbed, buildSuccessEmbed, bannerEmbed, bottomBannerEmbed, buildPreviewEmbed } from '../../services/embeds/embedBuilder';
+import { buildErrorEmbed, buildSuccessEmbed, bannerEmbed, buildPreviewEmbed } from '../../services/embeds/embedBuilder';
 import { PreviewPost } from '../../database/schemas/PreviewPost';
 import { Config } from '../../config/config';
 import { logger } from '../../utils/logger';
@@ -59,7 +59,6 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
         const embeds = [
           bannerEmbed(Config.banners.previews),
           buildPreviewEmbed({ title, description, imageUrl, authorTag: interaction.user.tag }),
-          bottomBannerEmbed(),
         ];
 
         const msg = await previewChannel.send({ embeds });
@@ -96,7 +95,6 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
             const embeds = [
               bannerEmbed(Config.banners.previews),
               buildPreviewEmbed({ title, description, imageUrl, authorTag: interaction.user.tag }),
-              bottomBannerEmbed(),
             ];
             const msg = await previewChannel.send({ embeds });
             await PreviewPost.findByIdAndUpdate(post._id, { messageId: msg.id, posted: true });

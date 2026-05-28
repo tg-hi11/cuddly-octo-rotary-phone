@@ -4,7 +4,6 @@ import { Vote } from '../../database/schemas/Vote';
 import { prcApi } from '../prc/prcApi';
 import {
   bannerEmbed,
-  bottomBannerEmbed,
   buildSessionStartupEmbed,
   buildShutdownEmbed,
   buildSessionButtons,
@@ -61,7 +60,7 @@ export async function postSessionEmbed(
     const rows  = buildSessionButtons(0, Config.session.voteThreshold);
 
     const msg = await channel.send({
-      embeds: [bannerEmbed(Config.banners.sessionStatus), embed, bottomBannerEmbed()],
+      embeds: [bannerEmbed(Config.banners.sessionStatus), embed],
       components: rows,
     });
 
@@ -129,7 +128,7 @@ export async function refreshSessionEmbed(
     try {
       const msg = await channel.messages.fetch(session.messageId);
       await msg.edit({
-        embeds: [bannerEmbed(Config.banners.sessionStatus), embed, bottomBannerEmbed()],
+        embeds: [bannerEmbed(Config.banners.sessionStatus), embed],
         components: rows,
       });
     } catch {
@@ -155,7 +154,7 @@ export async function shutdownSession(guildId: string, channel: TextChannel): Pr
     try {
       const msg = await channel.messages.fetch(session.messageId);
       await msg.edit({
-        embeds: [bannerEmbed(Config.banners.sessionStatus), buildShutdownEmbed(session), bottomBannerEmbed()],
+        embeds: [bannerEmbed(Config.banners.sessionStatus), buildShutdownEmbed(session)],
         components: [],
       });
     } catch { /* message gone */ }

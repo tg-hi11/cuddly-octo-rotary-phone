@@ -7,12 +7,9 @@ import { ISession } from '../../database/schemas/Session';
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
+/** Top banner — always the first embed */
 export function bannerEmbed(url: string): EmbedBuilder {
   return new EmbedBuilder().setImage(url).setColor(0xFFFFFF);
-}
-
-export function bottomBannerEmbed(): EmbedBuilder {
-  return new EmbedBuilder().setImage(Config.banners.bottom).setColor(0xFFFFFF);
 }
 
 // ─── Session Startup ──────────────────────────────────────────────────────────
@@ -51,7 +48,8 @@ export function buildSessionStartupEmbed(
       `\n` +
       `${E.restricted} **Status** — ${lock} · ${full}`
     )
-    .setFooter({ text: `Last refreshed: ${secondsAgo}s ago` });
+    .setFooter({ text: `Last refreshed: ${secondsAgo}s ago` })
+    .setImage(Config.banners.bottom);
 }
 
 export function buildSessionButtons(voteCount: number, threshold: number): ActionRowBuilder<ButtonBuilder>[] {
@@ -90,7 +88,8 @@ export function buildShutdownEmbed(session: ISession): EmbedBuilder {
       `\n` +
       `Thank you to everyone who attended.`
     )
-    .setTimestamp();
+    .setTimestamp()
+    .setImage(Config.banners.bottom);
 }
 
 // ─── Vote Embed ───────────────────────────────────────────────────────────────
@@ -119,7 +118,8 @@ export function buildVoteEmbed(
       `\n` +
       `${E.notif} Started by **${initiatorTag}** — click the button below to vote.`
     )
-    .setFooter({ text: 'Voters are hidden. Use the Voters button to see who voted.' });
+    .setFooter({ text: 'Voters are hidden. Use the Voters button to see who voted.' })
+    .setImage(Config.banners.bottom);
 }
 
 // ─── Boost Embed ──────────────────────────────────────────────────────────────
@@ -144,7 +144,8 @@ export function buildBoostEmbed(
       `\n` +
       `Join now and help us fill the server.`
     )
-    .setTimestamp();
+    .setTimestamp()
+    .setImage(Config.banners.bottom);
 }
 
 // ─── Infraction Embed ─────────────────────────────────────────────────────────
@@ -178,7 +179,8 @@ export function buildInfractionEmbed(params: {
   return new EmbedBuilder()
     .setColor(0xFFFFFF)
     .setDescription(body)
-    .setTimestamp();
+    .setTimestamp()
+    .setImage(Config.banners.bottom);
 }
 
 // ─── Promotion Embed ──────────────────────────────────────────────────────────
@@ -216,7 +218,8 @@ export function buildPromotionEmbed(params: {
   return new EmbedBuilder()
     .setColor(0xFFFFFF)
     .setDescription(body)
-    .setTimestamp();
+    .setTimestamp()
+    .setImage(Config.banners.bottom);
 }
 
 // ─── Preview Post Embed ───────────────────────────────────────────────────────
@@ -232,9 +235,9 @@ export function buildPreviewEmbed(params: {
     .setTitle(params.title)
     .setDescription(params.description)
     .setFooter({ text: `Posted by ${params.authorTag}` })
-    .setTimestamp();
+    .setTimestamp()
+    .setImage(params.imageUrl ?? Config.banners.bottom);
 
-  if (params.imageUrl) embed.setImage(params.imageUrl);
   return embed;
 }
 
@@ -257,10 +260,11 @@ export function buildServerInfoEmbed(
       `${E.folder} **Queue** — \`${queue}\`\n` +
       `${E.dev} **Staff Online** — \`${staff.length}\``
     )
-    .setTimestamp();
+    .setTimestamp()
+    .setImage(Config.banners.bottom);
 }
 
-// ─── Error / Success ──────────────────────────────────────────────────────────
+// ─── Error / Success — no banner (used in ephemeral / simple replies) ─────────
 
 export function buildErrorEmbed(title: string, description: string): EmbedBuilder {
   return new EmbedBuilder()

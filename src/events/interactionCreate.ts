@@ -9,7 +9,7 @@ import {
 } from 'discord.js';
 import { BotClient, Event } from '../types';
 import { checkCooldown } from '../utils/cooldown';
-import { buildErrorEmbed, bannerEmbed, buildVoteEmbed, bottomBannerEmbed } from '../services/embeds/embedBuilder';
+import { buildErrorEmbed, bannerEmbed, buildVoteEmbed } from '../services/embeds/embedBuilder';
 import { logger } from '../utils/logger';
 import { Vote } from '../database/schemas/Vote';
 import { Config } from '../config/config';
@@ -132,7 +132,6 @@ async function handleVoteButton(interaction: ButtonInteraction): Promise<void> {
       embeds: [
         bannerEmbed(Config.banners.sessionVote),
         buildVoteEmbed(interaction.user.tag, vote.voters, threshold, info.Name, info.CurrentPlayers, info.MaxPlayers, queueData.Queue),
-        bottomBannerEmbed(),
       ],
       components: [row],
     });

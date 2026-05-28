@@ -7,7 +7,7 @@ import {
 } from 'discord.js';
 import { Command, BotClient } from '../../types';
 import { hasInfractionPerms } from '../../utils/permissions';
-import { buildErrorEmbed, buildSuccessEmbed, bannerEmbed, bottomBannerEmbed, buildInfractionEmbed } from '../../services/embeds/embedBuilder';
+import { buildErrorEmbed, buildSuccessEmbed, bannerEmbed, buildInfractionEmbed } from '../../services/embeds/embedBuilder';
 import { Infraction } from '../../database/schemas/Infraction';
 import { Config } from '../../config/config';
 import { logger } from '../../utils/logger';
@@ -42,7 +42,6 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
     const embeds = [
       bannerEmbed(Config.banners.infractions),
       buildInfractionEmbed({ userTag: target.tag, userId: target.id, moderatorTag: interaction.user.tag, type: 'Strike', reason, evidence, caseId }),
-      bottomBannerEmbed(),
     ];
 
     try { await target.send({ embeds }); } catch { /* DM closed */ }

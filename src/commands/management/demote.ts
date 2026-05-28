@@ -7,7 +7,7 @@ import {
 } from 'discord.js';
 import { Command, BotClient } from '../../types';
 import { hasPromotionPerms } from '../../utils/permissions';
-import { buildErrorEmbed, buildSuccessEmbed, bannerEmbed, bottomBannerEmbed, buildPromotionEmbed } from '../../services/embeds/embedBuilder';
+import { buildErrorEmbed, buildSuccessEmbed, bannerEmbed, buildPromotionEmbed } from '../../services/embeds/embedBuilder';
 import { Promotion } from '../../database/schemas/Promotion';
 import { Config } from '../../config/config';
 import { logger } from '../../utils/logger';
@@ -51,7 +51,6 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
     const embeds = [
       bannerEmbed(Config.banners.promotions),
       buildPromotionEmbed({ userTag: target.tag, userId: target.id, promoterTag: interaction.user.tag, action: 'demote', fromRank, toRank: targetMember.roles.highest.name, reason }),
-      bottomBannerEmbed(),
     ];
 
     try { await target.send({ embeds }); } catch { /* DM closed */ }

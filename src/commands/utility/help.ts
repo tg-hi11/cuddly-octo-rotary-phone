@@ -11,7 +11,6 @@ import {
 import { Command, BotClient } from '../../types';
 import { E } from '../../config/emojis';
 import { Config } from '../../config/config';
-import { bottomBannerEmbed } from '../../services/embeds/embedBuilder';
 
 const CATEGORIES: { name: string; emoji: string; commands: { slash: string; prefix: string; desc: string }[] }[] = [
   {
@@ -100,7 +99,7 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
   let page = 0;
 
   const msg = await interaction.reply({
-    embeds: [buildHelpEmbed(page), bottomBannerEmbed()],
+    embeds: [buildHelpEmbed(page)],
     components: [buildNavRow(page)],
     fetchReply: true,
   });
@@ -114,7 +113,7 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
     }
     if (btn.customId === 'help_prev' && page > 0) page--;
     if (btn.customId === 'help_next' && page < CATEGORIES.length - 1) page++;
-    await btn.update({ embeds: [buildHelpEmbed(page), bottomBannerEmbed()], components: [buildNavRow(page)] });
+    await btn.update({ embeds: [buildHelpEmbed(page)], components: [buildNavRow(page)] });
   });
 
   collector.on('end', () => interaction.editReply({ components: [] }).catch(() => null));
@@ -131,7 +130,7 @@ async function prefixExecute(message: Message, args: string[], client: BotClient
       ).join('\n\n')
     );
 
-  await message.reply({ embeds: [embed, bottomBannerEmbed()] });
+  await message.reply({ embeds: [embed] });
 }
 
 const command: Command = {

@@ -11,7 +11,7 @@ import {
 } from 'discord.js';
 import { Command, BotClient } from '../../types';
 import { hasInfractionPerms } from '../../utils/permissions';
-import { buildErrorEmbed, bottomBannerEmbed } from '../../services/embeds/embedBuilder';
+import { buildErrorEmbed } from '../../services/embeds/embedBuilder';
 import { E } from '../../config/emojis';
 import { Infraction } from '../../database/schemas/Infraction';
 import { Config } from '../../config/config';
@@ -45,17 +45,17 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setColor(Config.colors.success)
+            .setColor(0xFFFFFF)
             .setDescription(`${E.search} **Infractions for ${target.tag}**\n\nNo${activeOnly ? ' active' : ''} infractions found.`)
-            .setTimestamp(),
-          bottomBannerEmbed(),
+            .setTimestamp()
+            .setImage(Config.banners.bottom),
         ],
       });
       return;
     }
 
     const pages = chunkArray(infractions, 5);
-    let page = 0;
+    let page    = 0;
 
     const buildEmbed = (pg: number) => {
       const lines = pages[pg].map((inf) => {
@@ -70,10 +70,11 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
       }).join('\n\n');
 
       return new EmbedBuilder()
-        .setColor(Config.colors.infraction)
+        .setColor(0xFFFFFF)
         .setDescription(`${E.search} **Infractions for ${target.tag}** — \`${infractions.length} total\`\n\n${lines}`)
         .setFooter({ text: `Page ${pg + 1}/${pages.length}` })
-        .setTimestamp();
+        .setTimestamp()
+        .setImage(Config.banners.bottom);
     };
 
     const navRow = () =>
@@ -83,7 +84,7 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
       );
 
     const msg = await interaction.editReply({
-      embeds: [buildEmbed(0), bottomBannerEmbed()],
+      embeds: [buildEmbed(0)],
       components: pages.length > 1 ? [navRow()] : [],
     });
 
@@ -93,7 +94,7 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
       if (btn.user.id !== interaction.user.id) { await btn.reply({ content: 'Not yours.', ephemeral: true }); return; }
       if (btn.customId === 'iprev' && page > 0) page--;
       if (btn.customId === 'inext' && page < pages.length - 1) page++;
-      await btn.update({ embeds: [buildEmbed(page), bottomBannerEmbed()], components: [navRow()] });
+      await btn.update({ embeds: [buildEmbed(page)], components: [navRow()] });
     });
     collector.on('end', () => interaction.editReply({ components: [] }).catch(() => null));
   } catch (err) {

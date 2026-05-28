@@ -15,7 +15,6 @@ import {
   buildErrorEmbed,
   buildSuccessEmbed,
   bannerEmbed,
-  bottomBannerEmbed,
   buildVoteEmbed,
   buildBoostEmbed,
 } from '../../services/embeds/embedBuilder';
@@ -121,7 +120,6 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
         embeds: [
           bannerEmbed(Config.banners.sessionVote),
           buildVoteEmbed(interaction.user.tag, [], threshold, info.Name, info.CurrentPlayers, info.MaxPlayers, queueData.Queue),
-          bottomBannerEmbed(),
         ],
         components: [row],
       });
@@ -168,7 +166,6 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
         embeds: [
           bannerEmbed(Config.banners.sessionStatus),
           buildBoostEmbed(info, queueData.Queue, session.hostTag),
-          bottomBannerEmbed(),
         ],
       });
 

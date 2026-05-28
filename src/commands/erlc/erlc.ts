@@ -12,7 +12,6 @@ import { Command, BotClient } from '../../types';
 import { prcApi } from '../../services/prc/prcApi';
 import {
   bannerEmbed,
-  bottomBannerEmbed,
   buildServerInfoEmbed,
   buildErrorEmbed,
 } from '../../services/embeds/embedBuilder';
@@ -49,7 +48,6 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
           embeds: [
             bannerEmbed(Config.banners.sessionStatus),
             buildServerInfoEmbed(info, players, queueData.Queue),
-            bottomBannerEmbed(),
           ],
         });
         break;
@@ -62,16 +60,17 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
           return;
         }
         const pages = chunkArray(players, 15);
-        let page = 0;
+        let page    = 0;
 
         const buildEmbed = (pg: number) =>
           new EmbedBuilder()
-            .setColor(Config.colors.primary)
+            .setColor(0xFFFFFF)
             .setDescription(
               `${E.person} **Players Online** — \`${players.length}\`\n\n` +
               pages[pg].map((p) => `${E.dash} \`${p.Player}\` — ${p.Team} · ${p.Permission}`).join('\n')
             )
-            .setFooter({ text: `Page ${pg + 1}/${pages.length}` });
+            .setFooter({ text: `Page ${pg + 1}/${pages.length}` })
+            .setImage(Config.banners.bottom);
 
         const navRow = () =>
           new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -80,7 +79,7 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
           );
 
         const msg = await interaction.editReply({
-          embeds: pages.length > 1 ? [buildEmbed(0), bottomBannerEmbed()] : [buildEmbed(0), bottomBannerEmbed()],
+          embeds: [buildEmbed(0)],
           components: pages.length > 1 ? [navRow()] : [],
         });
 
@@ -90,7 +89,7 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
           if (btn.user.id !== interaction.user.id) { await btn.reply({ content: 'Not your command.', ephemeral: true }); return; }
           if (btn.customId === 'prev' && page > 0) page--;
           if (btn.customId === 'next' && page < pages.length - 1) page++;
-          await btn.update({ embeds: [buildEmbed(page), bottomBannerEmbed()], components: [navRow()] });
+          await btn.update({ embeds: [buildEmbed(page)], components: [navRow()] });
         });
         collector.on('end', () => interaction.editReply({ components: [] }).catch(() => null));
         break;
@@ -98,11 +97,15 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
 
       case 'queue': {
         const queueData = await prcApi.getQueue();
-        const embed = new EmbedBuilder()
-          .setColor(Config.colors.primary)
-          .setDescription(`${E.folder} **Queue** — \`${queueData.Queue} players waiting\``)
-          .setTimestamp();
-        await interaction.editReply({ embeds: [embed, bottomBannerEmbed()] });
+        await interaction.editReply({
+          embeds: [
+            new EmbedBuilder()
+              .setColor(0xFFFFFF)
+              .setDescription(`${E.folder} **Queue** — \`${queueData.Queue} players waiting\``)
+              .setTimestamp()
+              .setImage(Config.banners.bottom),
+          ],
+        });
         break;
       }
 
@@ -113,18 +116,38 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
           return;
         }
         const pages = chunkArray(vehicles, 15);
-        let page = 0;
+        let page    = 0;
 
         const buildEmbed = (pg: number) =>
           new EmbedBuilder()
-            .setColor(Config.colors.primary)
+            .setColor(0xFFFFFF)
             .setDescription(
               `${E.roblox} **Vehicles** — \`${vehicles.length} spawned\`\n\n` +
               pages[pg].map((v) => `${E.dash} \`${v.Name}\` — ${v.Owner}`).join('\n')
             )
-            .setFooter({ text: `Page ${pg + 1}/${pages.length}` });
+            .setFooter({ text: `Page ${pg + 1}/${pages.length}` })
+            .setImage(Config.banners.bottom);
 
-        await interaction.editReply({ embeds: [buildEmbed(0), bottomBannerEmbed()] });
+        const navRow = () =>
+          new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder().setCustomId('vprev').setLabel('Back').setStyle(ButtonStyle.Secondary).setDisabled(page === 0),
+            new ButtonBuilder().setCustomId('vnext').setLabel('Next').setStyle(ButtonStyle.Secondary).setDisabled(page === pages.length - 1)
+          );
+
+        const msg = await interaction.editReply({
+          embeds: [buildEmbed(0)],
+          components: pages.length > 1 ? [navRow()] : [],
+        });
+
+        if (pages.length <= 1) return;
+        const collector = msg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+        collector.on('collect', async (btn) => {
+          if (btn.user.id !== interaction.user.id) { await btn.reply({ content: 'Not yours.', ephemeral: true }); return; }
+          if (btn.customId === 'vprev' && page > 0) page--;
+          if (btn.customId === 'vnext' && page < pages.length - 1) page++;
+          await btn.update({ embeds: [buildEmbed(page)], components: [navRow()] });
+        });
+        collector.on('end', () => interaction.editReply({ components: [] }).catch(() => null));
         break;
       }
 
@@ -134,14 +157,18 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
           await interaction.editReply({ embeds: [buildErrorEmbed('No Staff', 'No staff members are currently online.')] });
           return;
         }
-        const embed = new EmbedBuilder()
-          .setColor(Config.colors.primary)
-          .setDescription(
-            `${E.dev} **Staff Online** — \`${staff.length}\`\n\n` +
-            staff.map((s) => `${E.dash} \`${s.Player}\` — ${s.Permission}`).join('\n')
-          )
-          .setTimestamp();
-        await interaction.editReply({ embeds: [embed, bottomBannerEmbed()] });
+        await interaction.editReply({
+          embeds: [
+            new EmbedBuilder()
+              .setColor(0xFFFFFF)
+              .setDescription(
+                `${E.dev} **Staff Online** — \`${staff.length}\`\n\n` +
+                staff.map((s) => `${E.dash} \`${s.Player}\` — ${s.Permission}`).join('\n')
+              )
+              .setTimestamp()
+              .setImage(Config.banners.bottom),
+          ],
+        });
         break;
       }
 
@@ -152,16 +179,17 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
           return;
         }
         const pages = chunkArray(logs.slice(0, 50), 10);
-        let page = 0;
+        let page    = 0;
 
         const buildEmbed = (pg: number) =>
           new EmbedBuilder()
-            .setColor(Config.colors.error)
+            .setColor(0xFFFFFF)
             .setDescription(
               `${E.gavel} **Kill Logs**\n\n` +
               pages[pg].map((l) => `${E.dash} ${discordTimestamp(l.Kill_Time, 'R')} **${l.Killer}** → **${l.Killed}**`).join('\n')
             )
-            .setFooter({ text: `Page ${pg + 1}/${pages.length}` });
+            .setFooter({ text: `Page ${pg + 1}/${pages.length}` })
+            .setImage(Config.banners.bottom);
 
         const navRow = () =>
           new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -169,14 +197,14 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
             new ButtonBuilder().setCustomId('knext').setLabel('Next').setStyle(ButtonStyle.Secondary).setDisabled(page === pages.length - 1)
           );
 
-        const msg = await interaction.editReply({ embeds: [buildEmbed(0), bottomBannerEmbed()], components: pages.length > 1 ? [navRow()] : [] });
+        const msg = await interaction.editReply({ embeds: [buildEmbed(0)], components: pages.length > 1 ? [navRow()] : [] });
         if (pages.length <= 1) return;
         const collector = msg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
         collector.on('collect', async (btn) => {
           if (btn.user.id !== interaction.user.id) { await btn.reply({ content: 'Not yours.', ephemeral: true }); return; }
           if (btn.customId === 'kprev' && page > 0) page--;
           if (btn.customId === 'knext' && page < pages.length - 1) page++;
-          await btn.update({ embeds: [buildEmbed(page), bottomBannerEmbed()], components: [navRow()] });
+          await btn.update({ embeds: [buildEmbed(page)], components: [navRow()] });
         });
         collector.on('end', () => interaction.editReply({ components: [] }).catch(() => null));
         break;
@@ -189,15 +217,34 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
           return;
         }
         const pages = chunkArray(logs.slice(0, 50), 10);
+        let page    = 0;
+
         const buildEmbed = (pg: number) =>
           new EmbedBuilder()
-            .setColor(Config.colors.success)
+            .setColor(0xFFFFFF)
             .setDescription(
               `${E.leaf1} **Join Logs**\n\n` +
               pages[pg].map((l) => `${E.dash} ${discordTimestamp(l.Join_Time, 'R')} **${l.Player}** joined`).join('\n')
             )
-            .setFooter({ text: `Page ${pg + 1}/${pages.length}` });
-        await interaction.editReply({ embeds: [buildEmbed(0), bottomBannerEmbed()] });
+            .setFooter({ text: `Page ${pg + 1}/${pages.length}` })
+            .setImage(Config.banners.bottom);
+
+        const navRow = () =>
+          new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder().setCustomId('jprev').setLabel('Back').setStyle(ButtonStyle.Secondary).setDisabled(page === 0),
+            new ButtonBuilder().setCustomId('jnext').setLabel('Next').setStyle(ButtonStyle.Secondary).setDisabled(page === pages.length - 1)
+          );
+
+        const msg = await interaction.editReply({ embeds: [buildEmbed(0)], components: pages.length > 1 ? [navRow()] : [] });
+        if (pages.length <= 1) return;
+        const collector = msg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+        collector.on('collect', async (btn) => {
+          if (btn.user.id !== interaction.user.id) { await btn.reply({ content: 'Not yours.', ephemeral: true }); return; }
+          if (btn.customId === 'jprev' && page > 0) page--;
+          if (btn.customId === 'jnext' && page < pages.length - 1) page++;
+          await btn.update({ embeds: [buildEmbed(page)], components: [navRow()] });
+        });
+        collector.on('end', () => interaction.editReply({ components: [] }).catch(() => null));
         break;
       }
 
@@ -208,15 +255,34 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
           return;
         }
         const pages = chunkArray(logs.slice(0, 50), 10);
+        let page    = 0;
+
         const buildEmbed = (pg: number) =>
           new EmbedBuilder()
-            .setColor(Config.colors.info)
+            .setColor(0xFFFFFF)
             .setDescription(
               `${E.dev} **Command Logs**\n\n` +
               pages[pg].map((l) => `${E.dash} ${discordTimestamp(l.Timestamp, 'R')} **${l.Player}** — \`${l.Command}\``).join('\n')
             )
-            .setFooter({ text: `Page ${pg + 1}/${pages.length}` });
-        await interaction.editReply({ embeds: [buildEmbed(0), bottomBannerEmbed()] });
+            .setFooter({ text: `Page ${pg + 1}/${pages.length}` })
+            .setImage(Config.banners.bottom);
+
+        const navRow = () =>
+          new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder().setCustomId('cprev').setLabel('Back').setStyle(ButtonStyle.Secondary).setDisabled(page === 0),
+            new ButtonBuilder().setCustomId('cnext').setLabel('Next').setStyle(ButtonStyle.Secondary).setDisabled(page === pages.length - 1)
+          );
+
+        const msg = await interaction.editReply({ embeds: [buildEmbed(0)], components: pages.length > 1 ? [navRow()] : [] });
+        if (pages.length <= 1) return;
+        const collector = msg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+        collector.on('collect', async (btn) => {
+          if (btn.user.id !== interaction.user.id) { await btn.reply({ content: 'Not yours.', ephemeral: true }); return; }
+          if (btn.customId === 'cprev' && page > 0) page--;
+          if (btn.customId === 'cnext' && page < pages.length - 1) page++;
+          await btn.update({ embeds: [buildEmbed(page)], components: [navRow()] });
+        });
+        collector.on('end', () => interaction.editReply({ components: [] }).catch(() => null));
         break;
       }
 
@@ -226,14 +292,18 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
           await interaction.editReply({ embeds: [buildErrorEmbed('No Mod Calls', 'No active mod calls.')] });
           return;
         }
-        const embed = new EmbedBuilder()
-          .setColor(Config.colors.warning)
-          .setDescription(
-            `${E.notif} **Mod Calls** — \`${calls.length} active\`\n\n` +
-            calls.map((c) => `${E.dash} **${c.Caller}** → \`${c.Moderator || 'Unassigned'}\``).join('\n')
-          )
-          .setTimestamp();
-        await interaction.editReply({ embeds: [embed, bottomBannerEmbed()] });
+        await interaction.editReply({
+          embeds: [
+            new EmbedBuilder()
+              .setColor(0xFFFFFF)
+              .setDescription(
+                `${E.notif} **Mod Calls** — \`${calls.length} active\`\n\n` +
+                calls.map((c) => `${E.dash} **${c.Caller}** → \`${c.Moderator || 'Unassigned'}\``).join('\n')
+              )
+              .setTimestamp()
+              .setImage(Config.banners.bottom),
+          ],
+        });
         break;
       }
     }
@@ -251,14 +321,14 @@ async function prefixExecute(message: Message, args: string[], client: BotClient
   }
   const fakeInteraction = {
     deferReply: async () => {},
-    editReply: async (opts: object) => { await message.reply(opts as never); return message; },
-    reply: async (opts: object) => { await message.reply(opts as never); return message; },
-    deferred: true,
-    options: { getSubcommand: () => sub },
-    user: message.author,
-    guildId: message.guildId,
-    guild: message.guild,
-    member: message.member,
+    editReply:  async (opts: object) => { await message.reply(opts as never); return message; },
+    reply:      async (opts: object) => { await message.reply(opts as never); return message; },
+    deferred:   true,
+    options:    { getSubcommand: () => sub },
+    user:       message.author,
+    guildId:    message.guildId,
+    guild:      message.guild,
+    member:     message.member,
   };
   await execute(fakeInteraction as unknown as ChatInputCommandInteraction, client);
 }
