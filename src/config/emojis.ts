@@ -1,0 +1,21 @@
+// All custom emoji IDs — ONLY these are used across all embeds
+export const E = {
+  bot:        '<:bot:1508778228104560770>',
+  calendar:   '<:calendar:1508778223994011849>',
+  dash:       '<:dash:1508778235813560340>',
+  dev:        '<:dev:1508778250917249116>',
+  folder:     '<:folder:1508778220835704974>',
+  leaf1:      '<:leaf1:1508778358429716551>',
+  gavel:      '<:gavel:1508810689374851193>',
+  giveaway:   '<:giveaway:1508778244256694314>',
+  leaf2:      '<:leaf2:1508778247020609546>',
+  search:     '<:search:1508812113378803832>',
+  moon:       '<:moon:1508778790812389406>',
+  restricted: '<:restricted:1508778234224054344>',
+  notif:      '<:notif:1508813699928952945>',
+  paint:      '<:paint:1508778225692577822>',
+  person:     '<:person:1508810526539649034>',
+  roblox:     '<:roblox:1508778237273178162>',
+  thumbsup:   '<:thumbsup:1508778232831410216>',
+  thumbsdown: '<:thumbsdown:1508778231283585024>',
+} as const;
