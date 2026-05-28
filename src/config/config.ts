@@ -2,24 +2,24 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const Config = {
-  token: process.env.DISCORD_TOKEN!,
+  token:    process.env.DISCORD_TOKEN!,
   clientId: process.env.CLIENT_ID!,
-  prefix: process.env.PREFIX || '>',
+  prefix:   process.env.PREFIX || '?',
 
-  erlcApiKey: process.env.ERLC_API_KEY!,
+  erlcApiKey:  process.env.ERLC_API_KEY!,
   erlcBaseUrl: 'https://api.erlc.gg/v1',
 
   mongoUri: process.env.MONGODB_URI!,
 
   roles: {
-    sessionPerms: process.env.SESSION_PERMS_ROLE!,
+    sessionPerms:   process.env.SESSION_PERMS_ROLE!,
     infractionPerms: process.env.INFRACTION_PERMS_ROLE!,
-    promotionPerms: process.env.PROMOTION_PERMS_ROLE!,
+    promotionPerms:  process.env.PROMOTION_PERMS_ROLE!,
   },
 
   channels: {
-    sessions: process.env.SESSIONS_CHANNEL_ID!,
-    previews: process.env.PREVIEWS_CHANNEL_ID!,
+    sessions:   process.env.SESSIONS_CHANNEL_ID!,
+    previews:   process.env.PREVIEWS_CHANNEL_ID!,
     promotions: process.env.PROMO_CHANNEL_ID!,
     infractions: process.env.INFRACTION_CHANNEL_ID!,
   },
@@ -34,13 +34,13 @@ export const Config = {
   },
 
   colors: {
-    primary:    0x2B2D31,
-    success:    0x57F287,
-    error:      0xED4245,
-    warning:    0xFEE75C,
-    info:       0x5865F2,
-    infraction: 0xED4245,
-    promotion:  0x57F287,
+    primary:    0xFFFFFF,
+    success:    0xFFFFFF,
+    error:      0xFFFFFF,
+    warning:    0xFFFFFF,
+    info:       0xFFFFFF,
+    infraction: 0xFFFFFF,
+    promotion:  0xFFFFFF,
   },
 
   session: {

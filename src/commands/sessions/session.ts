@@ -208,7 +208,7 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
 async function prefixExecute(message: Message, args: string[], client: BotClient): Promise<void> {
   const sub = args[0]?.toLowerCase();
   if (!sub) {
-    await message.reply({ embeds: [buildErrorEmbed('Usage', 'Usage: `>session <startup|shutdown|vote|boost|full|lock|unlock>`')] });
+    await message.reply({ embeds: [buildErrorEmbed('Usage', 'Usage: `?session <startup|shutdown|vote|boost|full|lock|unlock>`')] });
     return;
   }
   const fakeInteraction = {

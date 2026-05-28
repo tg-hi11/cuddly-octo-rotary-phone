@@ -35,7 +35,7 @@ async function prefixExecute(message: Message, args: string[], client: BotClient
     return;
   }
   if (!args[0]) {
-    await message.reply({ embeds: [buildErrorEmbed('Usage', 'Usage: `>erlccommand <command>`')] });
+    await message.reply({ embeds: [buildErrorEmbed('Usage', 'Usage: `?erlccommand <command>`')] });
     return;
   }
   const cmd = args.join(' ');

@@ -7,14 +7,12 @@ import { ISession } from '../../database/schemas/Session';
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
-/** Top banner embed (always sent as first embed) */
 export function bannerEmbed(url: string): EmbedBuilder {
-  return new EmbedBuilder().setImage(url).setColor(Config.colors.primary);
+  return new EmbedBuilder().setImage(url).setColor(0xFFFFFF);
 }
 
-/** Bottom banner embed (always sent as last embed) */
 export function bottomBannerEmbed(): EmbedBuilder {
-  return new EmbedBuilder().setImage(Config.banners.bottom).setColor(Config.colors.primary);
+  return new EmbedBuilder().setImage(Config.banners.bottom).setColor(0xFFFFFF);
 }
 
 // ─── Session Startup ──────────────────────────────────────────────────────────
@@ -38,7 +36,7 @@ export function buildSessionStartupEmbed(
   const full     = session.isFull   ? '`Full`'   : '`Available`';
 
   return new EmbedBuilder()
-    .setColor(Config.colors.primary)
+    .setColor(0xFFFFFF)
     .setDescription(
       `${E.leaf1} **Session Active**\n` +
       `\n` +
@@ -53,7 +51,7 @@ export function buildSessionStartupEmbed(
       `\n` +
       `${E.restricted} **Status** — ${lock} · ${full}`
     )
-    .setFooter({ text: `-# Last updated: ${secondsAgo}s ago` });
+    .setFooter({ text: `Last refreshed: ${secondsAgo}s ago` });
 }
 
 export function buildSessionButtons(voteCount: number, threshold: number): ActionRowBuilder<ButtonBuilder>[] {
@@ -82,7 +80,7 @@ export function buildShutdownEmbed(session: ISession): EmbedBuilder {
     : 'N/A';
 
   return new EmbedBuilder()
-    .setColor(Config.colors.error)
+    .setColor(0xFFFFFF)
     .setDescription(
       `${E.moon} **Session Closed**\n` +
       `\n` +
@@ -106,11 +104,11 @@ export function buildVoteEmbed(
   maxPlayers: number,
   queue: number
 ): EmbedBuilder {
-  const filled  = Math.min(Math.floor((voters.length / threshold) * 10), 10);
-  const bar     = '█'.repeat(filled) + '░'.repeat(10 - filled);
+  const filled = Math.min(Math.floor((voters.length / threshold) * 10), 10);
+  const bar    = '█'.repeat(filled) + '░'.repeat(10 - filled);
 
   return new EmbedBuilder()
-    .setColor(Config.colors.info)
+    .setColor(0xFFFFFF)
     .setDescription(
       `${E.giveaway} **Vote to Start**\n` +
       `\n` +
@@ -132,7 +130,7 @@ export function buildBoostEmbed(
   hostTag: string
 ): EmbedBuilder {
   return new EmbedBuilder()
-    .setColor(Config.colors.warning)
+    .setColor(0xFFFFFF)
     .setDescription(
       `${E.notif} **Session Boost**\n` +
       `\n` +
@@ -178,7 +176,7 @@ export function buildInfractionEmbed(params: {
   body += `\n${E.dash} **Case ID** — \`#${params.caseId}\``;
 
   return new EmbedBuilder()
-    .setColor(Config.colors.infraction)
+    .setColor(0xFFFFFF)
     .setDescription(body)
     .setTimestamp();
 }
@@ -194,11 +192,6 @@ export function buildPromotionEmbed(params: {
   toRank: string;
   reason?: string;
 }): EmbedBuilder {
-  const color =
-    params.action === 'promote' ? Config.colors.success
-    : params.action === 'demote' ? Config.colors.error
-    : Config.colors.info;
-
   const label =
     params.action === 'promote' ? `${E.thumbsup} **Promoted**`
     : params.action === 'demote' ? `${E.thumbsdown} **Demoted**`
@@ -221,7 +214,7 @@ export function buildPromotionEmbed(params: {
   }
 
   return new EmbedBuilder()
-    .setColor(color)
+    .setColor(0xFFFFFF)
     .setDescription(body)
     .setTimestamp();
 }
@@ -235,9 +228,9 @@ export function buildPreviewEmbed(params: {
   authorTag: string;
 }): EmbedBuilder {
   const embed = new EmbedBuilder()
-    .setColor(Config.colors.primary)
+    .setColor(0xFFFFFF)
     .setTitle(params.title)
-    .setDescription(`${params.description}`)
+    .setDescription(params.description)
     .setFooter({ text: `Posted by ${params.authorTag}` })
     .setTimestamp();
 
@@ -255,7 +248,7 @@ export function buildServerInfoEmbed(
   const staff = players.filter((p) => p.Permission !== 'Normal');
 
   return new EmbedBuilder()
-    .setColor(Config.colors.primary)
+    .setColor(0xFFFFFF)
     .setDescription(
       `${E.roblox} **Server** — ${info.Name}\n` +
       `${E.giveaway} **Join Code** — \`${info.JoinKey}\`\n` +
@@ -271,17 +264,16 @@ export function buildServerInfoEmbed(
 
 export function buildErrorEmbed(title: string, description: string): EmbedBuilder {
   return new EmbedBuilder()
-    .setColor(Config.colors.error)
+    .setColor(0xFFFFFF)
     .setDescription(`${E.restricted} **${title}**\n${description}`)
     .setTimestamp();
 }
 
 export function buildSuccessEmbed(title: string, description: string): EmbedBuilder {
   return new EmbedBuilder()
-    .setColor(Config.colors.success)
+    .setColor(0xFFFFFF)
     .setDescription(`${E.thumbsup} **${title}**\n${description}`)
     .setTimestamp();
 }
 
-// ─── Legacy export kept for compatibility ─────────────────────────────────────
 export const DIVIDER = '';

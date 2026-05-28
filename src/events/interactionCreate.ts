@@ -9,17 +9,17 @@ import {
 } from 'discord.js';
 import { BotClient, Event } from '../types';
 import { checkCooldown } from '../utils/cooldown';
-import { buildErrorEmbed, bannerEmbed, buildVoteEmbed } from '../services/embeds/embedBuilder';
+import { buildErrorEmbed, bannerEmbed, buildVoteEmbed, bottomBannerEmbed } from '../services/embeds/embedBuilder';
 import { logger } from '../utils/logger';
 import { Vote } from '../database/schemas/Vote';
 import { Config } from '../config/config';
 import { prcApi } from '../services/prc/prcApi';
+import { E } from '../config/emojis';
 
 const event: Event = {
   name: 'interactionCreate',
   async execute(...args: unknown[]) {
-    // Last arg is always client (injected by eventHandler)
-    const client = args[args.length - 1] as BotClient;
+    const client      = args[args.length - 1] as BotClient;
     const interaction = args[0] as Interaction;
 
     // ── Slash Commands ─────────────────────────────────────────────────────────
@@ -27,8 +27,8 @@ const event: Event = {
       const command = client.commands?.get(interaction.commandName);
       if (!command) return;
 
-      const cooldown = command.cooldown ?? 3;
-      const remaining = checkCooldown(command.data.name, interaction.user.id, cooldown);
+      const cooldown   = command.cooldown ?? 3;
+      const remaining  = checkCooldown(command.data.name, interaction.user.id, cooldown);
       if (remaining > 0) {
         await interaction.reply({
           embeds: [buildErrorEmbed('Cooldown', `Please wait **${remaining}s** before using this command again.`)],
@@ -53,14 +53,11 @@ const event: Event = {
 
     // ── Button Interactions ────────────────────────────────────────────────────
     if (interaction.isButton()) {
-      const customId = interaction.customId;
-
-      if (customId === 'session_vote') {
+      if (interaction.customId === 'session_vote') {
         await handleVoteButton(interaction);
         return;
       }
-
-      if (customId === 'session_voters') {
+      if (interaction.customId === 'session_voters') {
         await handleVotersButton(interaction);
         return;
       }
@@ -71,7 +68,7 @@ const event: Event = {
 async function handleVoteButton(interaction: ButtonInteraction): Promise<void> {
   try {
     const guildId = interaction.guildId!;
-    const userId = interaction.user.id;
+    const userId  = interaction.user.id;
 
     const vote = await Vote.findOne({ guildId, status: 'pending' });
     if (!vote) {
@@ -84,7 +81,7 @@ async function handleVoteButton(interaction: ButtonInteraction): Promise<void> {
 
     if (vote.voters.includes(userId)) {
       await interaction.reply({
-        embeds: [buildErrorEmbed('Already Voted', 'You have already cast your vote!')],
+        embeds: [buildErrorEmbed('Already Voted', 'You have already cast your vote.')],
         ephemeral: true,
       });
       return;
@@ -94,7 +91,7 @@ async function handleVoteButton(interaction: ButtonInteraction): Promise<void> {
       vote.status = 'expired';
       await vote.save();
       await interaction.reply({
-        embeds: [buildErrorEmbed('Vote Expired', 'This vote has expired.')],
+        embeds: [buildErrorEmbed('Vote Expired', 'This vote has already expired.')],
         ephemeral: true,
       });
       return;
@@ -104,46 +101,41 @@ async function handleVoteButton(interaction: ButtonInteraction): Promise<void> {
     await vote.save();
 
     const threshold = vote.threshold;
-    const count = vote.voters.length;
+    const count     = vote.voters.length;
 
     // Fetch live server info to update embed
     let info, queueData;
     try {
       [info, queueData] = await Promise.all([prcApi.getServerInfo(), prcApi.getQueue()]);
     } catch {
+      // API unavailable — confirm the vote with a simple reply
       await interaction.reply({
-        content: `✅ Your vote has been counted! (${count}/${threshold})`,
+        embeds: [buildErrorEmbed('Vote Counted', `Your vote has been counted. (${count}/${threshold})`)],
         ephemeral: true,
       });
       return;
     }
 
-    const banner = bannerEmbed(Config.banners.sessionVote);
-    const embed = buildVoteEmbed(
-      interaction.user.tag,
-      vote.voters,
-      threshold,
-      info.Name,
-      info.CurrentPlayers,
-      info.MaxPlayers,
-      queueData.Queue
-    );
-
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
         .setCustomId('session_vote')
         .setLabel(`Vote to Join (${count}/${threshold})`)
-        .setEmoji('🗳️')
         .setStyle(ButtonStyle.Primary)
         .setDisabled(count >= threshold),
       new ButtonBuilder()
         .setCustomId('session_voters')
         .setLabel('Voters')
-        .setEmoji('👥')
         .setStyle(ButtonStyle.Secondary)
     );
 
-    await interaction.update({ embeds: [banner, embed], components: [row] });
+    await interaction.update({
+      embeds: [
+        bannerEmbed(Config.banners.sessionVote),
+        buildVoteEmbed(interaction.user.tag, vote.voters, threshold, info.Name, info.CurrentPlayers, info.MaxPlayers, queueData.Queue),
+        bottomBannerEmbed(),
+      ],
+      components: [row],
+    });
 
     if (count >= threshold) {
       vote.status = 'passed';
@@ -153,10 +145,10 @@ async function handleVoteButton(interaction: ButtonInteraction): Promise<void> {
     logger.error('VoteButton', 'Error processing vote', err);
     try {
       await interaction.reply({
-        embeds: [buildErrorEmbed('Error', 'Failed to process vote.')],
+        embeds: [buildErrorEmbed('Error', 'Failed to process your vote.')],
         ephemeral: true,
       });
-    } catch { /* interaction already replied */ }
+    } catch { /* already replied */ }
   }
 }
 
@@ -168,9 +160,8 @@ async function handleVotersButton(interaction: ButtonInteraction): Promise<void>
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setColor(Config.colors.primary)
-            .setTitle('🗳️  Voters')
-            .setDescription('No votes have been cast yet.')
+            .setColor(0xFFFFFF)
+            .setDescription(`${E.giveaway} **Voters**\n\nNo votes have been cast yet.`)
             .setTimestamp(),
         ],
         ephemeral: true,
@@ -178,13 +169,14 @@ async function handleVotersButton(interaction: ButtonInteraction): Promise<void>
       return;
     }
 
-    const voterList = vote.voters.map((id, i) => `\`${i + 1}.\` <@${id}>`).join('\n');
+    const voterList = vote.voters.map((id, i) => `${E.dash} \`${i + 1}.\` <@${id}>`).join('\n');
     await interaction.reply({
       embeds: [
         new EmbedBuilder()
-          .setColor(Config.colors.primary)
-          .setTitle(`🗳️  Voters (${vote.voters.length}/${vote.threshold})`)
-          .setDescription(voterList)
+          .setColor(0xFFFFFF)
+          .setDescription(
+            `${E.giveaway} **Voters** — \`${vote.voters.length}/${vote.threshold}\`\n\n${voterList}`
+          )
           .setTimestamp(),
       ],
       ephemeral: true,

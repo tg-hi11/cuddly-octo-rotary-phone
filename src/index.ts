@@ -19,26 +19,17 @@ const client = new Client({
   partials: [Partials.Channel, Partials.Message],
 }) as BotClient;
 
-client.commands = new Collection();
+client.commands  = new Collection();
 client.cooldowns = new Collection();
 
 // ─── Startup ──────────────────────────────────────────────────────────────────
 async function main(): Promise<void> {
   logger.info('Bot', 'Starting ERLC Bot...');
 
-  // Connect to MongoDB
   await connectDatabase();
-
-  // Load all commands and events
   await loadCommands(client);
   loadEvents(client);
 
-  // Pass client to every event execute so prefix commands can access commands
-  // Patch: wrap all event listeners to inject client as last arg
-  const originalOn = client.on.bind(client);
-  // Events are already registered — inject client via closure in event files instead
-
-  // Login
   await client.login(Config.token);
   logger.info('Bot', 'Login successful.');
 }
@@ -48,19 +39,26 @@ main().catch((err) => {
   process.exit(1);
 });
 
+// ─── Process-level error guards — keep the bot alive ─────────────────────────
+process.on('unhandledRejection', (reason) => {
+  logger.error('Bot', 'Unhandled promise rejection', reason);
+  // Do NOT exit — allow the bot to keep running
+});
+
+process.on('uncaughtException', (err) => {
+  logger.error('Bot', 'Uncaught exception', err);
+  // Do NOT exit — log and continue
+});
+
 // ─── Graceful Shutdown ────────────────────────────────────────────────────────
 process.on('SIGINT', () => {
-  logger.info('Bot', 'Received SIGINT — shutting down gracefully.');
+  logger.info('Bot', 'Received SIGINT — shutting down.');
   client.destroy();
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  logger.info('Bot', 'Received SIGTERM — shutting down gracefully.');
+  logger.info('Bot', 'Received SIGTERM — shutting down.');
   client.destroy();
   process.exit(0);
-});
-
-process.on('unhandledRejection', (reason) => {
-  logger.error('Bot', 'Unhandled promise rejection', reason);
 });

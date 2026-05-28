@@ -246,7 +246,7 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
 async function prefixExecute(message: Message, args: string[], client: BotClient): Promise<void> {
   const sub = args[0]?.toLowerCase();
   if (!sub) {
-    await message.reply({ embeds: [buildErrorEmbed('Usage', 'Usage: `>erlc <server|players|queue|vehicles|staff|killlogs|joinlogs|commandlogs|modcalls>`')] });
+    await message.reply({ embeds: [buildErrorEmbed('Usage', 'Usage: `?erlc <server|players|queue|vehicles|staff|killlogs|joinlogs|commandlogs|modcalls>`')] });
     return;
   }
   const fakeInteraction = {
