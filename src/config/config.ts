@@ -7,7 +7,7 @@ export const Config = {
   prefix: process.env.PREFIX || '>',
 
   erlcApiKey: process.env.ERLC_API_KEY!,
-  erlcBaseUrl: 'https://api.policeroleplay.community/v1',
+  erlcBaseUrl: 'https://api.erlc.gg/v1',
 
   mongoUri: process.env.MONGODB_URI!,
 
