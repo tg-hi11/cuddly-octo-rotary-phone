@@ -53,7 +53,6 @@ export async function postSessionEmbed(
     const [info, players] = await Promise.all([
       prcApi.getServerInfo(),
       prcApi.getPlayers(),
-      prcApi.getQueue(),
     ]);
 
     const embed = buildSessionStartupEmbed(info, players, session, 0);

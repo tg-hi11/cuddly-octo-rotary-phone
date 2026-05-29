@@ -53,11 +53,35 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
     return;
   }
 
+  const guildId        = interaction.guildId!;
+  const sessionChannel = interaction.guild!.channels.cache.get(Config.channels.sessions) as TextChannel;
+
+  // ── Instant DB-only subcommands — reply directly (no defer, no delay) ───────
+  if (sub === 'full' || sub === 'lock' || sub === 'unlock') {
+    const session = await getActiveSession(guildId);
+    if (!session) {
+      await interaction.reply({ embeds: [buildErrorEmbed('No Session', 'No active session.')], ephemeral: true });
+      return;
+    }
+    if (sub === 'full') {
+      session.isFull = !session.isFull;
+      await session.save();
+      await interaction.reply({ embeds: [buildSuccessEmbed('Updated', `Server marked as **${session.isFull ? 'Full' : 'Not Full'}**.`)], ephemeral: true });
+    } else if (sub === 'lock') {
+      session.isLocked = true;
+      await session.save();
+      await interaction.reply({ embeds: [buildSuccessEmbed('Locked', 'Session has been locked.')], ephemeral: true });
+    } else {
+      session.isLocked = false;
+      await session.save();
+      await interaction.reply({ embeds: [buildSuccessEmbed('Unlocked', 'Session has been unlocked.')], ephemeral: true });
+    }
+    return;
+  }
+
+  // ── Heavier subcommands — defer while API calls / DB work completes ─────────
   const ephemeral = sub !== 'startup' && sub !== 'shutdown' && sub !== 'vote' && sub !== 'boost';
   await interaction.deferReply({ ephemeral });
-
-  const guildId = interaction.guildId!;
-  const sessionChannel = interaction.guild!.channels.cache.get(Config.channels.sessions) as TextChannel;
 
   if (!sessionChannel && (sub === 'startup' || sub === 'shutdown')) {
     await interaction.editReply({ embeds: [buildErrorEmbed('Config Error', 'Session channel not configured.')] });
@@ -135,7 +159,6 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
         expiresAt,
       });
 
-      // Auto-expire
       setTimeout(async () => {
         const vote = await Vote.findOne({ guildId, status: 'pending', messageId: msg.id });
         if (vote) { vote.status = 'expired'; await vote.save(); try { await msg.edit({ components: [] }); } catch { /* gone */ } }
@@ -170,33 +193,6 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
       });
 
       await interaction.editReply({ embeds: [buildSuccessEmbed('Boosted', `Boost posted to <#${sessionChannel.id}>.`)] });
-      break;
-    }
-
-    case 'full': {
-      const session = await getActiveSession(guildId);
-      if (!session) { await interaction.editReply({ embeds: [buildErrorEmbed('No Session', 'No active session.')] }); return; }
-      session.isFull = !session.isFull;
-      await session.save();
-      await interaction.editReply({ embeds: [buildSuccessEmbed('Updated', `Server marked as **${session.isFull ? 'Full' : 'Not Full'}**.`)] });
-      break;
-    }
-
-    case 'lock': {
-      const session = await getActiveSession(guildId);
-      if (!session) { await interaction.editReply({ embeds: [buildErrorEmbed('No Session', 'No active session.')] }); return; }
-      session.isLocked = true;
-      await session.save();
-      await interaction.editReply({ embeds: [buildSuccessEmbed('Locked', 'Session has been locked.')] });
-      break;
-    }
-
-    case 'unlock': {
-      const session = await getActiveSession(guildId);
-      if (!session) { await interaction.editReply({ embeds: [buildErrorEmbed('No Session', 'No active session.')] }); return; }
-      session.isLocked = false;
-      await session.save();
-      await interaction.editReply({ embeds: [buildSuccessEmbed('Unlocked', 'Session has been unlocked.')] });
       break;
     }
   }

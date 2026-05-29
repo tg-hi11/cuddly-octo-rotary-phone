@@ -136,7 +136,7 @@ async function execute(interaction: ChatInputCommandInteraction, client: BotClie
 async function prefixExecute(message: Message, args: string[], client: BotClient): Promise<void> {
   const sub = args[0]?.toLowerCase();
   if (!sub) {
-    await message.reply({ embeds: [buildErrorEmbed('Usage', 'Usage: `>preview <post|schedule|delete>`')] });
+    await message.reply({ embeds: [buildErrorEmbed('Usage', `Usage: \`${Config.prefix}preview <post|schedule|delete>\``)] });
     return;
   }
   await message.reply({ embeds: [buildErrorEmbed('Use Slash Command', `Please use \`/preview ${sub}\` for full functionality.`)] });

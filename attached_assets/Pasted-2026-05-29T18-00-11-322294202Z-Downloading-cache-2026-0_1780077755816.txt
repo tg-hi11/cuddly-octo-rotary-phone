@@ -1,0 +1,88 @@
+2026-05-29T18:00:11.322294202Z ==> Downloading cache...
+2026-05-29T18:00:11.366549844Z ==> It looks like we don't have access to your repo, but we'll try to clone it anyway.
+2026-05-29T18:00:11.366580705Z ==> Cloning from https://github.com/tg-hi11/erlc-bot
+2026-05-29T18:00:12.022299083Z ==> Checking out commit 1a70819c7d59b43daaca98ad55ca148b3d2c4437 in branch main
+2026-05-29T18:00:12.608626581Z ==> Downloaded 12MB in 0s. Extraction took 0s.
+2026-05-29T18:00:41.021656389Z ==> Using Node.js version 24.14.1 (default)
+2026-05-29T18:00:41.02167555Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2026-05-29T18:00:41.070787907Z ==> Running build command 'npm install && npm run build'...
+2026-05-29T18:00:43.909991464Z 
+2026-05-29T18:00:43.910018744Z added 133 packages, and audited 134 packages in 3s
+2026-05-29T18:00:43.910024344Z 
+2026-05-29T18:00:43.910029965Z 23 packages are looking for funding
+2026-05-29T18:00:43.910109557Z   run `npm fund` for details
+2026-05-29T18:00:43.911415488Z 
+2026-05-29T18:00:43.911427458Z found 0 vulnerabilities
+2026-05-29T18:00:44.203775088Z 
+2026-05-29T18:00:44.203805019Z > erlc-bot@1.0.0 build
+2026-05-29T18:00:44.203821669Z > tsc
+2026-05-29T18:00:44.203825939Z 
+2026-05-29T18:01:00.784980645Z ==> Uploading build...
+2026-05-29T18:01:04.011714915Z ==> Uploaded in 2.6s. Compression took 0.6s
+2026-05-29T18:01:04.015323381Z ==> Build successful 🎉
+2026-05-29T18:01:08.668598659Z ==> Deploying...
+2026-05-29T18:01:08.746750412Z ==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+2026-05-29T18:01:38.329137887Z ==> Running 'npm start'
+2026-05-29T18:01:39.512107589Z 
+2026-05-29T18:01:39.51212777Z > erlc-bot@1.0.0 start
+2026-05-29T18:01:39.512130421Z > node dist/index.js
+2026-05-29T18:01:39.512133031Z 
+2026-05-29T18:01:39.719908637Z [Bootstrap] Checking build...
+2026-05-29T18:01:39.720194513Z [Bootstrap] dist exists — skipping build
+2026-05-29T18:01:44.316073458Z [2026-05-29T18:01:44.315Z] [INFO] [Bot] Starting ERLC Bot...
+2026-05-29T18:01:45.793463363Z [Database] Connected to MongoDB successfully.
+2026-05-29T18:01:46.011487763Z [2026-05-29T18:01:46.011Z] [INFO] [CommandHandler] Loaded command: erlc
+2026-05-29T18:01:46.012412137Z [2026-05-29T18:01:46.012Z] [INFO] [CommandHandler] Loaded command: erlccommand
+2026-05-29T18:01:46.107961749Z [2026-05-29T18:01:46.107Z] [INFO] [CommandHandler] Loaded command: demote
+2026-05-29T18:01:46.112124324Z [2026-05-29T18:01:46.112Z] [INFO] [CommandHandler] Loaded command: preview
+2026-05-29T18:01:46.112776683Z [2026-05-29T18:01:46.112Z] [INFO] [CommandHandler] Loaded command: promote
+2026-05-29T18:01:46.113614332Z [2026-05-29T18:01:46.113Z] [INFO] [CommandHandler] Loaded command: setrank
+2026-05-29T18:01:46.11646686Z [2026-05-29T18:01:46.116Z] [INFO] [CommandHandler] Loaded command: ban
+2026-05-29T18:01:46.117220435Z [2026-05-29T18:01:46.117Z] [INFO] [CommandHandler] Loaded command: infractions
+2026-05-29T18:01:46.118526881Z [2026-05-29T18:01:46.117Z] [INFO] [CommandHandler] Loaded command: removeinfraction
+2026-05-29T18:01:46.207867317Z [2026-05-29T18:01:46.207Z] [INFO] [CommandHandler] Loaded command: strike
+2026-05-29T18:01:46.209062617Z [2026-05-29T18:01:46.208Z] [INFO] [CommandHandler] Loaded command: suspend
+2026-05-29T18:01:46.209897317Z [2026-05-29T18:01:46.209Z] [INFO] [CommandHandler] Loaded command: warn
+2026-05-29T18:01:46.215574171Z [2026-05-29T18:01:46.215Z] [INFO] [CommandHandler] Loaded command: session
+2026-05-29T18:01:46.216339537Z [2026-05-29T18:01:46.216Z] [INFO] [CommandHandler] Loaded command: help
+2026-05-29T18:01:46.216760751Z [2026-05-29T18:01:46.216Z] [INFO] [CommandHandler] Loaded command: ping
+2026-05-29T18:01:46.216896299Z [2026-05-29T18:01:46.216Z] [INFO] [CommandHandler] Registering 15 slash commands...
+2026-05-29T18:01:46.647225522Z [2026-05-29T18:01:46.646Z] [ERROR] [CommandHandler] Failed to register slash commands DiscordAPIError[50035]: Invalid Form Body
+2026-05-29T18:01:46.647275385Z application_id[NUMBER_TYPE_COERCE]: Value "your_bot_client_id" is not snowflake.
+2026-05-29T18:01:46.647279865Z     at handleErrors (/opt/render/project/src/node_modules/@discordjs/rest/dist/index.js:762:13)
+2026-05-29T18:01:46.647283036Z     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+2026-05-29T18:01:46.647286046Z     at async SequentialHandler.runRequest (/opt/render/project/src/node_modules/@discordjs/rest/dist/index.js:1163:23)
+2026-05-29T18:01:46.647289076Z     at async SequentialHandler.queueRequest (/opt/render/project/src/node_modules/@discordjs/rest/dist/index.js:994:14)
+2026-05-29T18:01:46.647292676Z     at async _REST.request (/opt/render/project/src/node_modules/@discordjs/rest/dist/index.js:1307:22)
+2026-05-29T18:01:46.647295606Z     at async loadCommands (/opt/render/project/src/dist/handlers/commandHandler.js:41:9)
+2026-05-29T18:01:46.647299137Z     at async main (/opt/render/project/src/dist/index.js:28:5) {
+2026-05-29T18:01:46.647302067Z   requestBody: {
+2026-05-29T18:01:46.647305787Z     files: undefined,
+2026-05-29T18:01:46.647308927Z     json: [
+2026-05-29T18:01:46.647312077Z       [Object], [Object],
+2026-05-29T18:01:46.647315007Z       [Object], [Object],
+2026-05-29T18:01:46.647318008Z       [Object], [Object],
+2026-05-29T18:01:46.647320888Z       [Object], [Object],
+2026-05-29T18:01:46.647337569Z       [Object], [Object],
+2026-05-29T18:01:46.647340789Z       [Object], [Object],
+2026-05-29T18:01:46.647344019Z       [Object], [Object],
+2026-05-29T18:01:46.64734694Z       [Object]
+2026-05-29T18:01:46.64735869Z     ]
+2026-05-29T18:01:46.64736186Z   },
+2026-05-29T18:01:46.64736509Z   rawError: {
+2026-05-29T18:01:46.647368621Z     message: 'Invalid Form Body',
+2026-05-29T18:01:46.647371571Z     code: 50035,
+2026-05-29T18:01:46.647374641Z     errors: { application_id: [Object] }
+2026-05-29T18:01:46.647377791Z   },
+2026-05-29T18:01:46.647380851Z   code: 50035,
+2026-05-29T18:01:46.647383771Z   status: 400,
+2026-05-29T18:01:46.647386732Z   method: 'PUT',
+2026-05-29T18:01:46.647389642Z   url: 'https://discord.com/api/v10/applications/your_bot_client_id/commands'
+2026-05-29T18:01:46.647392312Z }
+2026-05-29T18:01:46.710238886Z [2026-05-29T18:01:46.709Z] [INFO] [EventHandler] Loaded event: interactionCreate
+2026-05-29T18:01:46.710262428Z [2026-05-29T18:01:46.709Z] [INFO] [EventHandler] Loaded event: messageCreate
+2026-05-29T18:01:46.710731145Z [2026-05-29T18:01:46.710Z] [INFO] [EventHandler] Loaded event: ready
+2026-05-29T18:01:49.189974798Z [2026-05-29T18:01:49.189Z] [INFO] [Bot] Login successful.
+2026-05-29T18:01:49.2843447Z [2026-05-29T18:01:49.284Z] [INFO] [Ready] Logged in as East London Systems#4489
+2026-05-29T18:01:49.285304086Z (node:81) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+2026-05-29T18:01:49.285335338Z (Use `node --trace-deprecation ...` to show where the warning was created)

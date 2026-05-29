@@ -1,15 +1,15 @@
-import { ActivityType, Client } from 'discord.js';
+import { ActivityType } from 'discord.js';
 import { BotClient, Event } from '../types';
 import { logger } from '../utils/logger';
+import { Config } from '../config/config';
 
 const event: Event = {
-  name: 'ready',
+  name: 'clientReady',
   once: true,
-  // For 'once' events, client is passed as the first argument by our eventHandler
   execute(client: unknown) {
     const bot = client as BotClient;
     logger.info('Ready', `Logged in as ${bot.user?.tag}`);
-    bot.user?.setActivity('ERLC | >help', { type: ActivityType.Watching });
+    bot.user?.setActivity(`ERLC | ${Config.prefix}help`, { type: ActivityType.Watching });
   },
 };
 
