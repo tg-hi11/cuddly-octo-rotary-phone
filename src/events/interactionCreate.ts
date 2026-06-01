@@ -6,10 +6,11 @@ import {
   ButtonBuilder,
   ButtonStyle,
   Interaction,
+  TextChannel,
 } from 'discord.js';
 import { BotClient, Event } from '../types';
 import { checkCooldown } from '../utils/cooldown';
-import { buildErrorEmbed, bannerEmbed, buildVoteEmbed } from '../services/embeds/embedBuilder';
+import { buildErrorEmbed, buildSuccessEmbed, bannerEmbed, buildVoteEmbed } from '../services/embeds/embedBuilder';
 import { logger } from '../utils/logger';
 import { Vote } from '../database/schemas/Vote';
 import { Config } from '../config/config';
@@ -27,8 +28,8 @@ const event: Event = {
       const command = client.commands?.get(interaction.commandName);
       if (!command) return;
 
-      const cooldown   = command.cooldown ?? 3;
-      const remaining  = checkCooldown(command.data.name, interaction.user.id, cooldown);
+      const cooldown  = command.cooldown ?? 3;
+      const remaining = checkCooldown(command.data.name, interaction.user.id, cooldown);
       if (remaining > 0) {
         await interaction.reply({
           embeds: [buildErrorEmbed('Cooldown', `Please wait **${remaining}s** before using this command again.`)],
@@ -103,14 +104,19 @@ async function handleVoteButton(interaction: ButtonInteraction): Promise<void> {
     const threshold = vote.threshold;
     const count     = vote.voters.length;
 
-    // Fetch live server info to update embed
+    if (count >= threshold) {
+      vote.status = 'passed';
+      await vote.save();
+    }
+
+    // Fetch live server info to rebuild vote embed
     let info, queueData;
     try {
       [info, queueData] = await Promise.all([prcApi.getServerInfo(), prcApi.getQueue()]);
     } catch {
-      // API unavailable — confirm the vote with a simple reply
+      // API unavailable — confirm ephemerally, skip embed update
       await interaction.reply({
-        embeds: [buildErrorEmbed('Vote Counted', `Your vote has been counted. (${count}/${threshold})`)],
+        embeds: [buildSuccessEmbed('Vote Counted', `Your vote has been recorded. (${count}/${threshold})`)],
         ephemeral: true,
       });
       return;
@@ -128,17 +134,34 @@ async function handleVoteButton(interaction: ButtonInteraction): Promise<void> {
         .setStyle(ButtonStyle.Secondary)
     );
 
-    await interaction.update({
-      embeds: [
-        bannerEmbed(Config.banners.sessionVote),
-        buildVoteEmbed(interaction.user.tag, vote.voters, threshold, info.Name, info.CurrentPlayers, info.MaxPlayers, queueData.Queue),
-      ],
-      components: [row],
-    });
+    const updatedEmbeds = [
+      bannerEmbed(Config.banners.sessionVote),
+      buildVoteEmbed(interaction.user.tag, vote.voters, threshold, info.Name, info.CurrentPlayers, info.MaxPlayers, queueData.Queue),
+    ];
 
-    if (count >= threshold) {
-      vote.status = 'passed';
-      await vote.save();
+    // ── Determine which message was clicked ───────────────────────────────────
+    // The session STATUS message and the VOTE message share the same button IDs.
+    // If this click was on the status message, do NOT replace it with vote embed
+    // content — just confirm ephemerally and update the dedicated vote message.
+    const clickedVoteMessage = interaction.message.id === vote.messageId;
+
+    if (clickedVoteMessage) {
+      // User clicked the dedicated vote message → update it in-place
+      await interaction.update({ embeds: updatedEmbeds, components: [row] });
+    } else {
+      // User clicked the session STATUS message → confirm ephemerally, then
+      // update the dedicated vote message separately (keep status intact)
+      await interaction.reply({
+        embeds: [buildSuccessEmbed('Vote Counted', `Your vote has been recorded. (${count}/${threshold})`)],
+        ephemeral: true,
+      });
+      try {
+        const voteChannel = interaction.guild!.channels.cache.get(vote.channelId) as TextChannel;
+        if (voteChannel) {
+          const voteMsg = await voteChannel.messages.fetch(vote.messageId);
+          await voteMsg.edit({ embeds: updatedEmbeds, components: [row] });
+        }
+      } catch { /* vote message may be gone — non-critical */ }
     }
   } catch (err) {
     logger.error('VoteButton', 'Error processing vote', err);

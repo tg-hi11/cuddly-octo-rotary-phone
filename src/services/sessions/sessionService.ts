@@ -1,4 +1,4 @@
-import { TextChannel, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { TextChannel } from 'discord.js';
 import { Session, ISession } from '../../database/schemas/Session';
 import { Vote } from '../../database/schemas/Vote';
 import { prcApi } from '../prc/prcApi';
@@ -76,6 +76,42 @@ export async function postSessionEmbed(
   }
 }
 
+// ─── Restore timers after bot restart ─────────────────────────────────────────
+export async function restoreActiveSessions(client: BotClient): Promise<void> {
+  try {
+    const sessions = await Session.find({ status: 'active' });
+    if (sessions.length === 0) {
+      logger.info('SessionService', 'No active sessions to restore.');
+      return;
+    }
+    logger.info('SessionService', `Restoring ${sessions.length} active session(s)...`);
+
+    for (const session of sessions) {
+      if (!session.channelId) continue;
+
+      const guild = client.guilds.cache.get(session.guildId);
+      if (!guild) {
+        logger.warn('SessionService', `Guild ${session.guildId} not in cache — skipping restore`);
+        continue;
+      }
+
+      const channel = guild.channels.cache.get(session.channelId) as TextChannel | undefined;
+      if (!channel) {
+        logger.warn('SessionService', `Channel ${session.channelId} not in cache for guild ${session.guildId} — skipping restore`);
+        continue;
+      }
+
+      lastRefresh.set(session.guildId, new Date());
+      startRefreshTimer(session.guildId, channel, client);
+      logger.info('SessionService', `Restored refresh timer for guild ${session.guildId}`);
+    }
+  } catch (err) {
+    logger.error('SessionService', 'Failed to restore active sessions on startup', err);
+  }
+}
+
+// ─── Internal timer management ────────────────────────────────────────────────
+
 function startRefreshTimer(guildId: string, channel: TextChannel, client: BotClient): void {
   if (refreshTimers.has(guildId)) clearInterval(refreshTimers.get(guildId)!);
 
@@ -106,7 +142,6 @@ export async function refreshSessionEmbed(
     const [info, players] = await Promise.all([
       prcApi.getServerInfo(),
       prcApi.getPlayers(),
-      prcApi.getQueue(),
     ]);
 
     if (info.CurrentPlayers > session.peakPlayers) {
@@ -130,8 +165,16 @@ export async function refreshSessionEmbed(
         embeds: [bannerEmbed(Config.banners.sessionStatus), embed],
         components: rows,
       });
-    } catch {
-      stopRefreshTimer(guildId);
+    } catch (err) {
+      // Only permanently kill the timer if the message was deleted.
+      // Transient errors (rate limits, network blips) should retry next tick.
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('Unknown Message') || msg.includes('10008')) {
+        logger.warn('SessionService', `Session message deleted for guild ${guildId} — stopping timer`);
+        stopRefreshTimer(guildId);
+      } else {
+        logger.warn('SessionService', `Refresh edit failed (will retry): ${msg}`);
+      }
     }
   } catch (err) {
     logger.error('SessionService', 'Failed to refresh session embed', err);
