@@ -6,6 +6,7 @@ import {
   Client,
   Collection,
   SharedSlashCommand,
+  TextInputAssertions,
 } from 'discord.js';
 
 export interface BotClient extends Client {
